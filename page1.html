@@ -65,7 +65,60 @@
             </div>
         </div>
     </nav>
-</section><section class="display-7" style="padding: 0;align-items: center;justify-content: center;flex-wrap: wrap;    align-content: center;display: flex;position: relative;height: 4rem;"><a href="https://mobiri.se/2960382" style="flex: 1 1;height: 4rem;position: absolute;width: 100%;z-index: 1;"><img alt="" style="height: 4rem;" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="></a><p style="margin: 0;text-align: center;" class="display-7">Made with &#8204;</p><a style="z-index:1" href="https://mobirise.com/offline-website-builder.html">Offline Website Creator</a></section><script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>  <script src="assets/smoothscroll/smooth-scroll.js"></script>  <script src="assets/ytplayer/index.js"></script>  <script src="assets/dropdown/js/navbar-dropdown.js"></script>  <script src="assets/theme/js/script.js"></script>  
+    
+    <section><div style="max-width: 1040px; margin: 0 auto;">
+                <div>
+                <a class="anchor" id="fitPrintAnchor" style="padding-top: 0px; margin-top: 0px;"></a>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.min.js"></script>
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+                <script type="text/javascript">
+                  iFrameResize(
+                  {
+                    log: false,
+                    checkOrigin: false,
+                    heightCalculationMethod: 'grow',
+                    autoResize: false,
+                    onMessage: function(messageData) {
+                      var jsonData = JSON.parse(messageData.message);
+                      if (jsonData.action == 'navigateTo') {
+                        window.onbeforeunload = null;
+                        window.parent.location.href= jsonData.data;
+                      }
+                      if (jsonData.action == 'scrollTo') {
+                        setTimeout(function () {
+                          document.getElementById('fitPrintAnchor').scrollIntoView({behavior: 'smooth', block: 'center'});
+                        },200);
+                      }
+                },
+                    onInit: function(iframe)
+                    {
+                      $(document).ready(function()
+                      {
+          iframe.iFrameResizer = {
+                        $(window).on('scroll', () =>
+                        {
+                          const scrollFromTop = $(document).scrollTop();
+                          var fitPrintIframe = $("#fitPrintIframe");
+                          var offset = fitPrintIframe.offset();
+                          if (scrollFromTop > offset.top + 10)
+                          {
+                            iframe.iFrameResizer.sendMessage(scrollFromTop - (offset.top - 10));
+                          }
+                        });
+                      });
+                    }
+                  }, '#fitPrintIframe');
+                </script>
+                <br>
+                <iframe id="fitPrintIframe" frameborder="0" scrolling="no" src="https://shop.fitprint.io/v2.html?shop=32d68ecc-c272-41c0-b2bf-34562ad966e3" width="100%" onload="iFrameResize({ log: false, checkOrigin: false, heightCalculationMethod: 'grow', autoResize: false, onMessage: function(messageData) {var jsonData = JSON.parse(messageData.message);if (jsonData.action == 'navigateTo') {window.onbeforeunload = null;window.parent.location.href= jsonData.data;}if (jsonData.action == 'scrollTo') {setTimeout(function () {document.getElementById('fitPrintAnchor').scrollIntoView({behavior: 'smooth', block: 'center'});},200);}},onInit: function(iframe) { $(document).ready(function () { $(window).on('scroll', () => { const scrollFromTop = $(document).scrollTop(); var fitPrintIframe = $('#fitPrintIframe'); var offset = fitPrintIframe.offset(); if (scrollFromTop > offset.top + 10) { iframe.iFrameResizer.sendMessage(scrollFromTop - (offset.top - 10)); }if (scrollFromTop == 0 ) { iframe.iFrameResizer.sendMessage(scrollFromTop); }  }); }); }}, '#fitPrintIframe');"></iframe>
+                <style>
+                  iframe {
+                    width: 1px; min-width: 100%;
+                  }
+                </style>
+                </div>
+              </div>
+</section>  
   
   
 </body>
