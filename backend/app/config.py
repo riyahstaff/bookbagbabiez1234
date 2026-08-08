@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     environment: str = "development"
 
+    # "mock" (default, zero cost/setup) | "anthropic" | "openai_compatible"
+    # (also covers local Ollama/vLLM - point OPENAI_BASE_URL at them)
+    llm_creative_provider: str = "mock"
+    llm_creative_model: str | None = None
+    llm_mechanical_provider: str = "mock"
+    llm_mechanical_model: str | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:

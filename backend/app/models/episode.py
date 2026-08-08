@@ -20,6 +20,7 @@ class Episode(TimestampedBase):
     title: Mapped[str] = mapped_column(String(200))
     summary: Mapped[str | None] = mapped_column(Text, default=None)
     treatment: Mapped[str | None] = mapped_column(Text, default=None)
+    outline: Mapped[str | None] = mapped_column(Text, default=None)
     script: Mapped[str | None] = mapped_column(Text, default=None)
     narration: Mapped[str | None] = mapped_column(Text, default=None)
     target_runtime_seconds: Mapped[int | None] = mapped_column(Integer, default=None)
@@ -29,3 +30,4 @@ class Episode(TimestampedBase):
     )
 
     series: Mapped["Series"] = relationship(back_populates="episodes")
+    scenes: Mapped[list["Scene"]] = relationship(back_populates="episode", cascade="all, delete-orphan")

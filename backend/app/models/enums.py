@@ -46,3 +46,27 @@ class LocationReferenceCategory(str, enum.Enum):
     INTERIOR_EAST = "INTERIOR_EAST"
     INTERIOR_WEST = "INTERIOR_WEST"
     ADDITIONAL = "ADDITIONAL"
+
+
+class SceneStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    SHOTS_READY = "SHOTS_READY"
+
+
+class ShotType(str, enum.Enum):
+    ESTABLISHING = "ESTABLISHING"
+    EXTREME_WIDE = "EXTREME_WIDE"
+    WIDE = "WIDE"
+    MEDIUM = "MEDIUM"
+    MEDIUM_CLOSE_UP = "MEDIUM_CLOSE_UP"
+    CLOSE_UP = "CLOSE_UP"
+    EXTREME_CLOSE_UP = "EXTREME_CLOSE_UP"
+    OVER_THE_SHOULDER = "OVER_THE_SHOULDER"
+    TWO_SHOT = "TWO_SHOT"
+    REACTION_SHOT = "REACTION_SHOT"
+    INSERT_SHOT = "INSERT_SHOT"
+    POV = "POV"
+    TRACKING = "TRACKING"
+    PAN = "PAN"
+    TILT = "TILT"
+    STATIC = "STATIC"

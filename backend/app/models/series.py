@@ -10,6 +10,10 @@ class Series(TimestampedBase):
     series_code: Mapped[str] = mapped_column(String(32), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, default=None)
+    # The two Series Bible facets actually consumed as LLM context (Phase 3) -
+    # world/time-period/tone details, and hard continuity rules ("never do X").
+    world_details: Mapped[str | None] = mapped_column(Text, default=None)
+    continuity_rules: Mapped[str | None] = mapped_column(Text, default=None)
     genre: Mapped[str | None] = mapped_column(String(100), default=None)
     animation_style: Mapped[str | None] = mapped_column(String(200), default=None)
     target_resolution: Mapped[str] = mapped_column(String(20), default="1280x720")

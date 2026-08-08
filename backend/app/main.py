@@ -9,7 +9,9 @@ from app.api.routers import (
     episodes,
     locations,
     props,
+    scenes,
     series,
+    shots,
     voices,
 )
 from app.api.routers import settings as settings_router
@@ -42,6 +44,8 @@ app.include_router(character_outfits.router)
 app.include_router(voices.router)
 app.include_router(locations.router)
 app.include_router(props.router)
+app.include_router(scenes.router)
+app.include_router(shots.router)
 
 # Uploaded reference images/audio live under data/series/... Mounted at /media
 # rather than serving all of data/ directly, so the sqlite file (a sibling of

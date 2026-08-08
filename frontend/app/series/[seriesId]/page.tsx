@@ -150,6 +150,20 @@ export default function SeriesDetailPage() {
           onChange={(e) => set("description", e.target.value)}
         />
         <TextAreaField
+          label="World Details"
+          rows={2}
+          value={form.world_details ?? ""}
+          onChange={(e) => set("world_details", e.target.value)}
+          placeholder="Time period, setting, tone - fed to the writer LLM as standing context."
+        />
+        <TextAreaField
+          label="Continuity Rules"
+          rows={2}
+          value={form.continuity_rules ?? ""}
+          onChange={(e) => set("continuity_rules", e.target.value)}
+          placeholder="Hard rules the writer LLM must never break."
+        />
+        <TextAreaField
           label="Visual Style Prompt"
           rows={2}
           value={form.visual_style_prompt ?? ""}

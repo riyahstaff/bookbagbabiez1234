@@ -10,6 +10,7 @@ class EpisodeBase(BaseModel):
     title: str
     summary: str | None = None
     treatment: str | None = None
+    outline: str | None = None
     script: str | None = None
     narration: str | None = None
     target_runtime_seconds: int | None = None
@@ -25,6 +26,7 @@ class EpisodeUpdate(BaseModel):
     title: str | None = None
     summary: str | None = None
     treatment: str | None = None
+    outline: str | None = None
     script: str | None = None
     narration: str | None = None
     target_runtime_seconds: int | None = None

@@ -18,8 +18,14 @@ import type {
   PropReference,
   ProviderCapability,
   ProviderConfiguration,
+  Scene,
+  SceneCharacterAssignment,
+  SceneInput,
   Series,
   SeriesInput,
+  Shot,
+  ShotCharacterAssignment,
+  ShotInput,
   Voice,
   VoiceInput,
 } from "./types";
@@ -233,3 +239,41 @@ export const uploadPropReference = (propId: number, file: File, label?: string, 
 };
 export const deletePropReference = (referenceId: number) =>
   request<void>(`/api/prop-references/${referenceId}`, { method: "DELETE" });
+
+// Episode story-pipeline actions
+export const generateEpisodeOutline = (episodeId: number) =>
+  request<Episode>(`/api/episodes/${episodeId}/generate-outline`, { method: "POST" });
+export const generateEpisodeScript = (episodeId: number) =>
+  request<Episode>(`/api/episodes/${episodeId}/generate-script`, { method: "POST" });
+
+// Scenes
+export const listScenes = (episodeId: number) => request<Scene[]>(`/api/episodes/${episodeId}/scenes`);
+export const getScene = (id: number) => request<Scene>(`/api/scenes/${id}`);
+export const createScene = (episodeId: number, input: SceneInput & { scene_number: number }) =>
+  request<Scene>(`/api/episodes/${episodeId}/scenes`, { method: "POST", body: JSON.stringify(input) });
+export const generateScenes = (episodeId: number) =>
+  request<Scene[]>(`/api/episodes/${episodeId}/generate-scenes`, { method: "POST" });
+export const updateScene = (id: number, input: SceneInput) =>
+  request<Scene>(`/api/scenes/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteScene = (id: number) => request<void>(`/api/scenes/${id}`, { method: "DELETE" });
+export const setSceneCharacters = (sceneId: number, characters: SceneCharacterAssignment[]) =>
+  request<Scene>(`/api/scenes/${sceneId}/characters`, {
+    method: "PUT",
+    body: JSON.stringify({ characters }),
+  });
+
+// Shots
+export const listShots = (sceneId: number) => request<Shot[]>(`/api/scenes/${sceneId}/shots`);
+export const getShot = (id: number) => request<Shot>(`/api/shots/${id}`);
+export const createShot = (sceneId: number, input: ShotInput & { shot_number: number }) =>
+  request<Shot>(`/api/scenes/${sceneId}/shots`, { method: "POST", body: JSON.stringify(input) });
+export const generateShots = (sceneId: number) =>
+  request<Shot[]>(`/api/scenes/${sceneId}/generate-shots`, { method: "POST" });
+export const updateShot = (id: number, input: ShotInput) =>
+  request<Shot>(`/api/shots/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteShot = (id: number) => request<void>(`/api/shots/${id}`, { method: "DELETE" });
+export const setShotCharacters = (shotId: number, characters: ShotCharacterAssignment[]) =>
+  request<Shot>(`/api/shots/${shotId}/characters`, {
+    method: "PUT",
+    body: JSON.stringify({ characters }),
+  });

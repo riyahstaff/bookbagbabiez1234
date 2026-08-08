@@ -3,6 +3,8 @@ export interface Series {
   series_code: string;
   title: string;
   description: string | null;
+  world_details: string | null;
+  continuity_rules: string | null;
   genre: string | null;
   animation_style: string | null;
   target_resolution: string;
@@ -77,6 +79,7 @@ export interface Episode {
   title: string;
   summary: string | null;
   treatment: string | null;
+  outline: string | null;
   script: string | null;
   narration: string | null;
   target_runtime_seconds: number | null;
@@ -278,3 +281,98 @@ export interface PropReference {
   notes: string | null;
   created_at: string;
 }
+
+export type SceneStatus = "DRAFT" | "SHOTS_READY";
+
+export interface SceneCharacterAssignment {
+  character_id: number;
+  outfit_id: number | null;
+}
+
+export interface Scene {
+  id: number;
+  episode_id: number;
+  scene_number: number;
+  location_id: number | null;
+  time_of_day: string | null;
+  action_description: string | null;
+  dialogue: string | null;
+  narration: string | null;
+  emotional_tone: string | null;
+  continuity_notes: string | null;
+  estimated_duration_seconds: number | null;
+  status: SceneStatus;
+  characters: SceneCharacterAssignment[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type SceneInput = Partial<
+  Omit<Scene, "id" | "episode_id" | "status" | "characters" | "created_at" | "updated_at">
+>;
+
+export type ShotType =
+  | "ESTABLISHING"
+  | "EXTREME_WIDE"
+  | "WIDE"
+  | "MEDIUM"
+  | "MEDIUM_CLOSE_UP"
+  | "CLOSE_UP"
+  | "EXTREME_CLOSE_UP"
+  | "OVER_THE_SHOULDER"
+  | "TWO_SHOT"
+  | "REACTION_SHOT"
+  | "INSERT_SHOT"
+  | "POV"
+  | "TRACKING"
+  | "PAN"
+  | "TILT"
+  | "STATIC";
+
+export const SHOT_TYPES: ShotType[] = [
+  "ESTABLISHING",
+  "EXTREME_WIDE",
+  "WIDE",
+  "MEDIUM",
+  "MEDIUM_CLOSE_UP",
+  "CLOSE_UP",
+  "EXTREME_CLOSE_UP",
+  "OVER_THE_SHOULDER",
+  "TWO_SHOT",
+  "REACTION_SHOT",
+  "INSERT_SHOT",
+  "POV",
+  "TRACKING",
+  "PAN",
+  "TILT",
+  "STATIC",
+];
+
+export interface ShotCharacterAssignment {
+  character_id: number;
+  outfit_id: number | null;
+}
+
+export interface Shot {
+  id: number;
+  scene_id: number;
+  shot_number: number;
+  shot_type: ShotType;
+  camera_angle: string | null;
+  camera_movement: string | null;
+  action: string | null;
+  dialogue: string | null;
+  narration: string | null;
+  emotion: string | null;
+  lighting: string | null;
+  duration_seconds: number | null;
+  visual_prompt: string | null;
+  negative_prompt: string | null;
+  characters: ShotCharacterAssignment[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type ShotInput = Partial<
+  Omit<Shot, "id" | "scene_id" | "characters" | "created_at" | "updated_at">
+>;

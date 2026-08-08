@@ -6,12 +6,16 @@ from app.models.enums import (
     EpisodeStatus,
     LocationReferenceCategory,
     ProviderCapability,
+    SceneStatus,
+    ShotType,
 )
 from app.models.episode import Episode
 from app.models.location import Location, LocationReference
 from app.models.prop import Prop, PropReference
+from app.models.scene import Scene, SceneCharacter
 from app.models.series import Series
 from app.models.settings import ProjectSetting, ProviderConfiguration
+from app.models.shot import Shot, ShotCharacter
 from app.models.voice import Voice
 
 __all__ = [
@@ -30,6 +34,12 @@ __all__ = [
     "PropReference",
     "ProviderCapability",
     "ProviderConfiguration",
+    "Scene",
+    "SceneCharacter",
+    "SceneStatus",
     "Series",
+    "Shot",
+    "ShotCharacter",
+    "ShotType",
     "Voice",
 ]

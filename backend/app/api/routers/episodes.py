@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.llm_helpers import run_llm_stage
 from app.database import get_db
-from app.models import Episode, Series
+from app.models import Character, Episode, EpisodeStatus, Series
+from app.pipeline.generation import generate_episode_outline, generate_episode_script
+from app.providers.llm import get_creative_llm
+from app.providers.llm.base import LLMProvider
 from app.schemas.episode import EpisodeCreate, EpisodeRead, EpisodeUpdate
 
 router = APIRouter(tags=["episodes"])
@@ -80,3 +84,33 @@ def delete_episode(episode_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Episode not found")
     db.delete(episode)
     db.commit()
+
+
+@router.post("/api/episodes/{episode_id}/generate-outline", response_model=EpisodeRead)
+def generate_outline(
+    episode_id: int, db: Session = Depends(get_db), llm: LLMProvider = Depends(get_creative_llm)
+):
+    episode = db.get(Episode, episode_id)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    outline = run_llm_stage(generate_episode_outline, llm, episode, episode.series)
+    episode.outline = outline
+    db.commit()
+    db.refresh(episode)
+    return episode
+
+
+@router.post("/api/episodes/{episode_id}/generate-script", response_model=EpisodeRead)
+def generate_script(
+    episode_id: int, db: Session = Depends(get_db), llm: LLMProvider = Depends(get_creative_llm)
+):
+    episode = db.get(Episode, episode_id)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    characters = db.query(Character).filter(Character.series_id == episode.series_id).all()
+    script = run_llm_stage(generate_episode_script, llm, episode, episode.series, characters)
+    episode.script = script
+    episode.status = EpisodeStatus.SCRIPT_READY
+    db.commit()
+    db.refresh(episode)
+    return episode

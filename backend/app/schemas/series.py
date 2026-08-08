@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict
 class SeriesBase(BaseModel):
     title: str
     description: str | None = None
+    world_details: str | None = None
+    continuity_rules: str | None = None
     genre: str | None = None
     animation_style: str | None = None
     target_resolution: str = "1280x720"
@@ -26,6 +28,8 @@ class SeriesCreate(SeriesBase):
 class SeriesUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+    world_details: str | None = None
+    continuity_rules: str | None = None
     genre: str | None = None
     animation_style: str | None = None
     target_resolution: str | None = None

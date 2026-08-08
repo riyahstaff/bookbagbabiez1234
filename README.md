@@ -4,13 +4,17 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 2 (Character Bible) complete
+## Status: Phase 3 (Story Pipeline) complete
 
-Phase 0 (research and architecture) and Phase 1 (app shell) are done. Phase 2 adds the
-Character Bible: reference images (by category) and outfits for characters, plus
-Voices, Locations, and Props, each with their own reference assets - all uploaded,
-stored, served, and edited through the real UI. There is still no AI provider code -
-no video, voice, image, or LLM generation happens yet. That starts in Phase 3+.
+Phases 0-2 (research/architecture, app shell, Character Bible) are done. Phase 3 adds
+the first real AI capability: an LLM provider abstraction (Anthropic, any
+OpenAI-compatible endpoint including local Ollama/vLLM, and a deterministic Mock
+provider that's the default so the app works with zero API keys), plus the writing
+pipeline itself - treatment → outline → script → scene breakdown → shot breakdown -
+with structured (JSON) output parsed and resolved against the existing Character/
+Location Bible. Every level is manually editable and independently creatable; nothing
+requires the AI. There is still no video, voice, or image generation - that starts in
+Phase 4+ (storyboards) and Phase 6 (video).
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration
