@@ -302,10 +302,10 @@ export default function SceneDetailPage() {
               <li key={shot.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-20 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
-                    {shot.active_generation?.output_path ? (
+                    {shot.active_image_generation?.output_path ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={mediaUrl(shot.active_generation.output_path)}
+                        src={mediaUrl(shot.active_image_generation.output_path)}
                         alt={`Shot ${shot.shot_number} storyboard`}
                         className="h-full w-full object-cover"
                       />
@@ -321,19 +321,31 @@ export default function SceneDetailPage() {
                       Shot {shot.shot_number}: {shot.shot_type}
                     </Link>
                     <p className="text-xs text-slate-500">{shot.action || "(no action description)"}</p>
-                    {shot.active_generation && (
-                      <span
-                        className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${
-                          shot.active_generation.approval_status === "APPROVED"
-                            ? "bg-green-100 text-green-700"
-                            : shot.active_generation.approval_status === "REJECTED"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {shot.active_generation.approval_status}
-                      </span>
-                    )}
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                      {shot.active_image_generation && (
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                            shot.active_image_generation.approval_status === "APPROVED"
+                              ? "bg-green-100 text-green-700"
+                              : shot.active_image_generation.approval_status === "REJECTED"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {shot.active_image_generation.approval_status}
+                        </span>
+                      )}
+                      {shot.active_dialogue_generation && (
+                        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                          Dialogue audio
+                        </span>
+                      )}
+                      {shot.active_narration_generation && (
+                        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                          Narration audio
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Link

@@ -165,29 +165,29 @@ def test_delete_generation_removes_row_and_file(client, test_storage):
     assert client.get(f"/api/shots/{shot_id}/generations").json() == []
 
 
-def test_shot_exposes_active_generation_summary(client):
+def test_shot_exposes_active_image_generation_summary(client):
     _, _, shot_id = _create_shot(client)
     shot = client.get(f"/api/shots/{shot_id}").json()
-    assert shot["active_generation"] is None
+    assert shot["active_image_generation"] is None
 
     first = client.post(f"/api/shots/{shot_id}/generate-storyboard", json={}).json()
     shot = client.get(f"/api/shots/{shot_id}").json()
-    assert shot["active_generation"] is None  # not active until approved/activated
+    assert shot["active_image_generation"] is None  # not active until approved/activated
 
     client.post(f"/api/generations/{first['id']}/approve")
     shot = client.get(f"/api/shots/{shot_id}").json()
-    assert shot["active_generation"]["id"] == first["id"]
-    assert shot["active_generation"]["approval_status"] == "APPROVED"
+    assert shot["active_image_generation"]["id"] == first["id"]
+    assert shot["active_image_generation"]["approval_status"] == "APPROVED"
 
 
-def test_scene_shot_list_also_exposes_active_generation(client):
+def test_scene_shot_list_also_exposes_active_image_generation(client):
     _, scene_id, shot_id = _create_shot(client)
     generation = client.post(f"/api/shots/{shot_id}/generate-storyboard", json={}).json()
     client.post(f"/api/generations/{generation['id']}/activate")
 
     shots = client.get(f"/api/scenes/{scene_id}/shots").json()
     shot = next(s for s in shots if s["id"] == shot_id)
-    assert shot["active_generation"]["id"] == generation["id"]
+    assert shot["active_image_generation"]["id"] == generation["id"]
 
 
 def test_delete_on_missing_generation_404s(client):

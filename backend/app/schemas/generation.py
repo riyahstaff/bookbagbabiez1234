@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import ApprovalStatus, GenerationStatus, GenerationType
+from app.models.enums import ApprovalStatus, AudioTrack, GenerationStatus, GenerationType
 
 
 class GenerationRead(BaseModel):
@@ -11,6 +11,8 @@ class GenerationRead(BaseModel):
     id: int
     shot_id: int
     generation_type: GenerationType
+    audio_track: AudioTrack | None = None
+    voice_id: int | None = None
     provider_name: str
     model_name: str | None = None
     workflow_version: str | None = None
@@ -31,3 +33,10 @@ class GenerationRead(BaseModel):
 
 class GenerateStoryboardRequest(BaseModel):
     seed: int | None = None
+
+
+class GenerateVoiceRequest(BaseModel):
+    track: AudioTrack
+    voice_id: int
+    seed: int | None = None
+    force_regenerate: bool = False

@@ -353,7 +353,9 @@ export interface ShotCharacterAssignment {
   outfit_id: number | null;
 }
 
-export type GenerationType = "IMAGE" | "VIDEO";
+export type GenerationType = "IMAGE" | "VOICE" | "VIDEO";
+
+export type AudioTrack = "DIALOGUE" | "NARRATION";
 
 export type GenerationStatus =
   | "QUEUED"
@@ -370,6 +372,8 @@ export interface Generation {
   id: number;
   shot_id: number;
   generation_type: GenerationType;
+  audio_track: AudioTrack | null;
+  voice_id: number | null;
   provider_name: string;
   model_name: string | null;
   workflow_version: string | null;
@@ -404,11 +408,23 @@ export interface Shot {
   visual_prompt: string | null;
   negative_prompt: string | null;
   characters: ShotCharacterAssignment[];
-  active_generation: Generation | null;
+  active_image_generation: Generation | null;
+  active_dialogue_generation: Generation | null;
+  active_narration_generation: Generation | null;
   created_at: string;
   updated_at: string;
 }
 
 export type ShotInput = Partial<
-  Omit<Shot, "id" | "scene_id" | "characters" | "active_generation" | "created_at" | "updated_at">
+  Omit<
+    Shot,
+    | "id"
+    | "scene_id"
+    | "characters"
+    | "active_image_generation"
+    | "active_dialogue_generation"
+    | "active_narration_generation"
+    | "created_at"
+    | "updated_at"
+  >
 >;

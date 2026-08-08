@@ -4,21 +4,22 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 4 (Storyboard System) complete
+## Status: Phase 5 (Voice System) complete
 
-Phases 0-3 (research/architecture, app shell, Character Bible, story pipeline) are
-done. Phase 4 adds the first image generation capability: an `ImageProvider`
-abstraction (a deterministic Mock provider that draws a real placeholder PNG with the
-prompt and seed baked in, the default so the app works with zero GPU/API keys; and a
-ComfyUI HTTP provider for FLUX.1-`schnell`-class local/self-hosted models), a
-deterministic shot-prompt builder (Series visual style + per-character Bible
-descriptions + location + this shot's own camera/action/lighting fields — no LLM call
-needed), and the storyboard workflow itself: generate any number of versions per shot,
-each kept as its own row (nothing is auto-deleted, including failed attempts), with
-approve/reject/activate actions and exactly one active version per shot. The Scene
-view shows each shot's active-version thumbnail and approval status at a glance. There
-is still no voice or video generation - that starts in Phase 5 (voice) and Phase 6
-(video).
+Phases 0-4 (research/architecture, app shell, Character Bible, story pipeline,
+storyboard system) are done. Phase 5 adds narration and dialogue audio: a
+`VoiceProvider` abstraction (a deterministic Mock provider that writes a real WAV tone
+- duration scaled to the line's length, pitch derived from the voice - the default so
+the app works with zero GPU/API keys; and an OpenAI-compatible `/audio/speech`
+provider for self-hosted Chatterbox/CosyVoice2/Qwen3-TTS servers, or real OpenAI TTS).
+Storyboard images, dialogue audio, and narration audio now share the same
+`Generation`/versioning/approval infrastructure from Phase 4, generalized so a shot
+can have all three kinds of generation active at once instead of one shared "active"
+slot. Dialogue/narration audio is content-hash cached across the whole app (same
+text + voice + settings reuses the existing file instead of resynthesizing, with a
+reference-counted delete so a shared file only disappears once nothing still points at
+it) - the effect that matters most once a script repeats lines or a season reuses a
+catchphrase. There is still no video generation - that starts in Phase 6.
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration

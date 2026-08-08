@@ -74,8 +74,8 @@ export default function VoiceListPage() {
         </Link>
         <h1 className="mt-1 text-2xl font-semibold">Voices</h1>
         <p className="text-sm text-slate-500">
-          Persistent voices for characters, plus the series narrator. Actual TTS generation is Phase 5 -
-          this just holds the identity, provider settings, and reference audio.
+          Persistent voices for characters, plus the series narrator. Generate dialogue and narration
+          audio for a specific line from a shot&apos;s detail page.
         </p>
       </div>
 

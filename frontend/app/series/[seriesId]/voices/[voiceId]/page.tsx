@@ -180,6 +180,11 @@ export default function VoiceDetailPage() {
 
       <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-lg font-medium">Reference Audio</h2>
+        <p className="text-xs text-slate-500">
+          Only upload reference audio you have the rights to clone. Real (non-mock) voice providers may
+          embed an inaudible watermark in generated output - e.g. Chatterbox&apos;s PerTh watermark - and
+          any AI-voiced content should be disclosed to your audience where required.
+        </p>
         {voice.reference_audio_path ? (
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio controls src={mediaUrl(voice.reference_audio_path)} className="w-full max-w-md" />

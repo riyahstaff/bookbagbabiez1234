@@ -64,4 +64,6 @@ class ShotRead(ShotBase):
     created_at: datetime
     updated_at: datetime
     characters: list[ShotCharacterRead] = []
-    active_generation: GenerationRead | None = None
+    active_image_generation: GenerationRead | None = None
+    active_dialogue_generation: GenerationRead | None = None
+    active_narration_generation: GenerationRead | None = None

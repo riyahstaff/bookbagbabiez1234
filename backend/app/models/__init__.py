@@ -3,6 +3,7 @@ from app.models.character_outfit import CharacterOutfit, OutfitReference
 from app.models.character_reference import CharacterReference
 from app.models.enums import (
     ApprovalStatus,
+    AudioTrack,
     CharacterReferenceCategory,
     EpisodeStatus,
     GenerationStatus,
@@ -24,6 +25,7 @@ from app.models.voice import Voice
 
 __all__ = [
     "ApprovalStatus",
+    "AudioTrack",
     "Character",
     "CharacterOutfit",
     "CharacterReference",

@@ -74,7 +74,13 @@ class ShotType(str, enum.Enum):
 
 class GenerationType(str, enum.Enum):
     IMAGE = "IMAGE"  # storyboard (Phase 4)
+    VOICE = "VOICE"  # narration/dialogue audio (Phase 5)
     VIDEO = "VIDEO"  # Phase 6 - same table, not built yet
+
+
+class AudioTrack(str, enum.Enum):
+    DIALOGUE = "DIALOGUE"
+    NARRATION = "NARRATION"
 
 
 class GenerationStatus(str, enum.Enum):

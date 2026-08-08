@@ -1,12 +1,25 @@
+import hashlib
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import ApprovalStatus, Generation, GenerationStatus, GenerationType, Shot
+from app.models import (
+    ApprovalStatus,
+    AudioTrack,
+    Generation,
+    GenerationStatus,
+    GenerationType,
+    Shot,
+    Voice,
+)
 from app.pipeline.shot_prompt import build_shot_prompt
 from app.providers.image import get_image_provider
 from app.providers.image.base import ImageProvider
-from app.schemas.generation import GenerateStoryboardRequest, GenerationRead
+from app.providers.voice import get_voice_provider
+from app.providers.voice.base import VoiceProvider
+from app.schemas.generation import GenerateStoryboardRequest, GenerateVoiceRequest, GenerationRead
 from app.storage import get_storage
 from app.storage.base import StorageBackend
 from app.utils.paths import generation_output_path
@@ -95,6 +108,104 @@ def generate_storyboard(
     return generation
 
 
+def _voice_content_hash(text: str, voice_id: int, settings_snapshot: dict) -> str:
+    payload = json.dumps(
+        {"text": text, "voice_id": voice_id, "settings": settings_snapshot}, sort_keys=True
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+@router.post("/api/shots/{shot_id}/generate-voice", response_model=GenerationRead, status_code=201)
+def generate_voice(
+    shot_id: int,
+    payload: GenerateVoiceRequest,
+    db: Session = Depends(get_db),
+    provider: VoiceProvider = Depends(get_voice_provider),
+    storage: StorageBackend = Depends(get_storage),
+):
+    shot = _get_shot_or_404(db, shot_id)
+    series_id = shot.scene.episode.series_id
+
+    voice = db.get(Voice, payload.voice_id)
+    if not voice or voice.series_id != series_id:
+        raise HTTPException(status_code=400, detail="voice_id is not in this series")
+
+    text = shot.dialogue if payload.track == AudioTrack.DIALOGUE else shot.narration
+    if not text:
+        raise HTTPException(
+            status_code=400, detail=f"Shot has no {payload.track.value.lower()} text to synthesize"
+        )
+
+    settings_snapshot = {
+        "speed": voice.speed,
+        "pitch": voice.pitch,
+        "emotion": voice.emotion,
+        "seed": payload.seed,
+        **(voice.generation_settings or {}),
+    }
+    content_hash = _voice_content_hash(text, voice.id, settings_snapshot)
+
+    cached: Generation | None = None
+    if not payload.force_regenerate:
+        cached = (
+            db.query(Generation)
+            .filter(
+                Generation.generation_type == GenerationType.VOICE,
+                Generation.content_hash == content_hash,
+                Generation.status == GenerationStatus.COMPLETE,
+            )
+            .first()
+        )
+
+    generation = Generation(
+        shot_id=shot_id,
+        generation_type=GenerationType.VOICE,
+        audio_track=payload.track,
+        voice_id=voice.id,
+        provider_name=type(provider).__name__,
+        prompt=text,
+        seed=payload.seed,
+        content_hash=content_hash,
+        status=GenerationStatus.RUNNING,
+    )
+    db.add(generation)
+    db.flush()
+
+    if cached is not None:
+        generation.output_path = cached.output_path
+        generation.model_name = cached.model_name
+        generation.status = GenerationStatus.COMPLETE
+    else:
+        try:
+            extra_settings = {
+                k: v
+                for k, v in {"pitch": voice.pitch, "emotion": voice.emotion, "seed": payload.seed}.items()
+                if v is not None
+            }
+            extra_settings.update(voice.generation_settings or {})
+            result = provider.generate_speech(
+                text=text,
+                voice_identifier=voice.provider_voice_id or voice.voice_code,
+                speed=voice.speed,
+                extra_settings=extra_settings or None,
+            )
+            episode = shot.scene.episode
+            relative_path = generation_output_path(
+                episode.series.series_code, episode.episode_code, shot_id, f"{generation.id}.wav"
+            )
+            storage.save(relative_path, result.audio_bytes)
+            generation.output_path = relative_path
+            generation.model_name = result.model_name
+            generation.status = GenerationStatus.COMPLETE
+        except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
+            generation.status = GenerationStatus.FAILED
+            generation.error_message = str(exc)
+
+    db.commit()
+    db.refresh(generation)
+    return generation
+
+
 @router.post("/api/generations/{generation_id}/approve", response_model=GenerationRead)
 def approve_generation(generation_id: int, db: Session = Depends(get_db)):
     generation = _get_generation_or_404(db, generation_id)
@@ -125,8 +236,15 @@ def activate_generation(generation_id: int, db: Session = Depends(get_db)):
 
 
 def _activate(db: Session, generation: Generation) -> None:
+    # Scoped by (shot_id, generation_type, audio_track), not just shot_id: a
+    # shot can have an active storyboard image, an active dialogue take, and
+    # an active narration take all at once, and activating one must not
+    # clear the other two.
     db.query(Generation).filter(
-        Generation.shot_id == generation.shot_id, Generation.id != generation.id
+        Generation.shot_id == generation.shot_id,
+        Generation.generation_type == generation.generation_type,
+        Generation.audio_track == generation.audio_track,
+        Generation.id != generation.id,
     ).update({"is_active": False})
     generation.is_active = True
 
@@ -139,6 +257,14 @@ def delete_generation(
 ):
     generation = _get_generation_or_404(db, generation_id)
     if generation.output_path:
-        storage.delete(generation.output_path)
+        # A cache hit in generate_voice() can leave two rows pointing at the
+        # same physical file - only delete it once nothing else references it.
+        still_referenced = (
+            db.query(Generation)
+            .filter(Generation.output_path == generation.output_path, Generation.id != generation.id)
+            .first()
+        )
+        if not still_referenced:
+            storage.delete(generation.output_path)
     db.delete(generation)
     db.commit()

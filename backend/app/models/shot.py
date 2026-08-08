@@ -3,7 +3,7 @@ from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import TimestampedBase
-from app.models.enums import ShotType
+from app.models.enums import AudioTrack, GenerationType, ShotType
 
 
 class Shot(TimestampedBase):
@@ -35,8 +35,25 @@ class Shot(TimestampedBase):
     )
 
     @property
-    def active_generation(self) -> "Generation | None":
-        return next((g for g in self.generations if g.is_active), None)
+    def active_image_generation(self) -> "Generation | None":
+        return next(
+            (g for g in self.generations if g.is_active and g.generation_type == GenerationType.IMAGE),
+            None,
+        )
+
+    @property
+    def active_dialogue_generation(self) -> "Generation | None":
+        return next(
+            (g for g in self.generations if g.is_active and g.audio_track == AudioTrack.DIALOGUE),
+            None,
+        )
+
+    @property
+    def active_narration_generation(self) -> "Generation | None":
+        return next(
+            (g for g in self.generations if g.is_active and g.audio_track == AudioTrack.NARRATION),
+            None,
+        )
 
 
 class ShotCharacter(TimestampedBase):

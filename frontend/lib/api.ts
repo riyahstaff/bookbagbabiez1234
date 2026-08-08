@@ -1,4 +1,5 @@
 import type {
+  AudioTrack,
   Character,
   CharacterInput,
   CharacterOutfit,
@@ -281,13 +282,28 @@ export const setShotCharacters = (shotId: number, characters: ShotCharacterAssig
 export const buildShotPrompt = (shotId: number) =>
   request<Shot>(`/api/shots/${shotId}/build-prompt`, { method: "POST" });
 
-// Generations (storyboard images)
+// Generations (storyboard images, dialogue/narration audio)
 export const listGenerations = (shotId: number) =>
   request<Generation[]>(`/api/shots/${shotId}/generations`);
 export const generateStoryboard = (shotId: number, seed?: number | null) =>
   request<Generation>(`/api/shots/${shotId}/generate-storyboard`, {
     method: "POST",
     body: JSON.stringify({ seed: seed ?? null }),
+  });
+export const generateVoice = (
+  shotId: number,
+  track: AudioTrack,
+  voiceId: number,
+  options?: { seed?: number | null; forceRegenerate?: boolean },
+) =>
+  request<Generation>(`/api/shots/${shotId}/generate-voice`, {
+    method: "POST",
+    body: JSON.stringify({
+      track,
+      voice_id: voiceId,
+      seed: options?.seed ?? null,
+      force_regenerate: options?.forceRegenerate ?? false,
+    }),
   });
 export const approveGeneration = (generationId: number) =>
   request<Generation>(`/api/generations/${generationId}/approve`, { method: "POST" });
