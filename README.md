@@ -4,17 +4,21 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 3 (Story Pipeline) complete
+## Status: Phase 4 (Storyboard System) complete
 
-Phases 0-2 (research/architecture, app shell, Character Bible) are done. Phase 3 adds
-the first real AI capability: an LLM provider abstraction (Anthropic, any
-OpenAI-compatible endpoint including local Ollama/vLLM, and a deterministic Mock
-provider that's the default so the app works with zero API keys), plus the writing
-pipeline itself - treatment → outline → script → scene breakdown → shot breakdown -
-with structured (JSON) output parsed and resolved against the existing Character/
-Location Bible. Every level is manually editable and independently creatable; nothing
-requires the AI. There is still no video, voice, or image generation - that starts in
-Phase 4+ (storyboards) and Phase 6 (video).
+Phases 0-3 (research/architecture, app shell, Character Bible, story pipeline) are
+done. Phase 4 adds the first image generation capability: an `ImageProvider`
+abstraction (a deterministic Mock provider that draws a real placeholder PNG with the
+prompt and seed baked in, the default so the app works with zero GPU/API keys; and a
+ComfyUI HTTP provider for FLUX.1-`schnell`-class local/self-hosted models), a
+deterministic shot-prompt builder (Series visual style + per-character Bible
+descriptions + location + this shot's own camera/action/lighting fields — no LLM call
+needed), and the storyboard workflow itself: generate any number of versions per shot,
+each kept as its own row (nothing is auto-deleted, including failed attempts), with
+approve/reject/activate actions and exactly one active version per shot. The Scene
+view shows each shot's active-version thumbnail and approval status at a glance. There
+is still no voice or video generation - that starts in Phase 5 (voice) and Phase 6
+(video).
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration

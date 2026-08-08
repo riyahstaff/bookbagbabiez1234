@@ -5,6 +5,7 @@ from app.api.llm_helpers import run_llm_stage
 from app.database import get_db
 from app.models import Character, Scene, SceneStatus, Shot, ShotCharacter, ShotType
 from app.pipeline.generation import generate_shot_breakdown
+from app.pipeline.shot_prompt import build_shot_prompt
 from app.providers.llm import get_mechanical_llm
 from app.providers.llm.base import LLMProvider
 from app.schemas.shot import ShotCharactersUpdate, ShotCreate, ShotRead, ShotUpdate
@@ -135,6 +136,19 @@ def set_shot_characters(shot_id: int, payload: ShotCharactersUpdate, db: Session
                 shot_id=shot_id, character_id=assignment.character_id, outfit_id=assignment.outfit_id
             )
         )
+    db.commit()
+    db.refresh(shot)
+    return shot
+
+
+@router.post("/api/shots/{shot_id}/build-prompt", response_model=ShotRead)
+def build_prompt(shot_id: int, db: Session = Depends(get_db)):
+    shot = _get_shot_or_404(db, shot_id)
+    characters_visible = [sc.character for sc in shot.characters]
+    series = shot.scene.episode.series
+    visual_prompt, negative_prompt = build_shot_prompt(shot, shot.scene, series, characters_visible)
+    shot.visual_prompt = visual_prompt
+    shot.negative_prompt = negative_prompt
     db.commit()
     db.refresh(shot)
     return shot

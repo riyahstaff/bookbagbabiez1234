@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import ShotType
+from app.schemas.generation import GenerationRead
 
 
 class ShotCharacterRead(BaseModel):
@@ -63,3 +64,4 @@ class ShotRead(ShotBase):
     created_at: datetime
     updated_at: datetime
     characters: list[ShotCharacterRead] = []
+    active_generation: GenerationRead | None = None

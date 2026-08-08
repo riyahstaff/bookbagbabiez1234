@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     llm_mechanical_provider: str = "mock"
     llm_mechanical_model: str | None = None
 
+    # "mock" (default, zero cost/setup, draws a real placeholder image) | "comfyui"
+    image_provider: str = "mock"
+    comfyui_base_url: str = "http://127.0.0.1:8188"
+
 
 @lru_cache
 def get_settings() -> Settings:

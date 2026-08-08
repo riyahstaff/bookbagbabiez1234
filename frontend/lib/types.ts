@@ -353,6 +353,41 @@ export interface ShotCharacterAssignment {
   outfit_id: number | null;
 }
 
+export type GenerationType = "IMAGE" | "VIDEO";
+
+export type GenerationStatus =
+  | "QUEUED"
+  | "PREPARING"
+  | "RUNNING"
+  | "PROCESSING"
+  | "COMPLETE"
+  | "FAILED"
+  | "CANCELED";
+
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface Generation {
+  id: number;
+  shot_id: number;
+  generation_type: GenerationType;
+  provider_name: string;
+  model_name: string | null;
+  workflow_version: string | null;
+  prompt: string | null;
+  negative_prompt: string | null;
+  seed: number | null;
+  generation_settings: Record<string, unknown> | null;
+  status: GenerationStatus;
+  error_message: string | null;
+  output_path: string | null;
+  preview_path: string | null;
+  quality_score: number | null;
+  approval_status: ApprovalStatus;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Shot {
   id: number;
   scene_id: number;
@@ -369,10 +404,11 @@ export interface Shot {
   visual_prompt: string | null;
   negative_prompt: string | null;
   characters: ShotCharacterAssignment[];
+  active_generation: Generation | null;
   created_at: string;
   updated_at: string;
 }
 
 export type ShotInput = Partial<
-  Omit<Shot, "id" | "scene_id" | "characters" | "created_at" | "updated_at">
+  Omit<Shot, "id" | "scene_id" | "characters" | "active_generation" | "created_at" | "updated_at">
 >;

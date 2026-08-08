@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  buildShotPrompt,
   deleteShot,
   getShot,
   listCharacters,
@@ -11,6 +12,7 @@ import {
   updateShot,
 } from "@/lib/api";
 import { TextField, TextAreaField, SelectField } from "@/components/Field";
+import StoryboardPanel from "@/components/StoryboardPanel";
 import { SHOT_TYPES, type Character, type Shot, type ShotInput, type ShotType } from "@/lib/types";
 
 export default function ShotDetailPage() {
@@ -27,20 +29,42 @@ export default function ShotDetailPage() {
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [buildingPrompt, setBuildingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
+  function refreshShot() {
+    return getShot(shotId).then((data) => {
+      setShot(data);
+      setForm(data);
+      return data;
+    });
+  }
+
   useEffect(() => {
-    getShot(shotId)
+    refreshShot()
       .then((data) => {
-        setShot(data);
-        setForm(data);
         setSelectedCharacterIds(new Set(data.characters.map((c) => c.character_id)));
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load shot"))
       .finally(() => setLoading(false));
     listCharacters(seriesId).then(setCharacters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shotId, seriesId]);
+
+  async function handleBuildPrompt() {
+    setBuildingPrompt(true);
+    setError(null);
+    try {
+      const updated = await buildShotPrompt(shotId);
+      setShot(updated);
+      setForm(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to build prompt");
+    } finally {
+      setBuildingPrompt(false);
+    }
+  }
 
   function set<K extends keyof ShotInput>(key: K, value: ShotInput[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -187,13 +211,25 @@ export default function ShotDetailPage() {
           value={form.narration ?? ""}
           onChange={(e) => set("narration", e.target.value)}
         />
-        <TextAreaField
-          label="Visual Prompt"
-          rows={3}
-          value={form.visual_prompt ?? ""}
-          onChange={(e) => set("visual_prompt", e.target.value)}
-          placeholder="Editable before any generation is requested - construct from the Series/Character Bible plus this shot's fields."
-        />
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <TextAreaField
+              label="Visual Prompt"
+              rows={3}
+              value={form.visual_prompt ?? ""}
+              onChange={(e) => set("visual_prompt", e.target.value)}
+              placeholder="Editable before any generation is requested - construct from the Series/Character Bible plus this shot's fields."
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleBuildPrompt}
+            disabled={buildingPrompt}
+            className="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-50"
+          >
+            {buildingPrompt ? "Building..." : "Build Prompt"}
+          </button>
+        </div>
         <TextAreaField
           label="Negative Prompt"
           rows={2}
@@ -236,6 +272,8 @@ export default function ShotDetailPage() {
           Save Character List
         </button>
       </section>
+
+      <StoryboardPanel shotId={shotId} onShotChanged={refreshShot} />
     </div>
   );
 }

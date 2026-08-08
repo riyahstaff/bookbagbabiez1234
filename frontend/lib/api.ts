@@ -7,6 +7,7 @@ import type {
   Episode,
   EpisodeInput,
   EpisodeStatus,
+  Generation,
   Location,
   LocationInput,
   LocationReference,
@@ -277,3 +278,22 @@ export const setShotCharacters = (shotId: number, characters: ShotCharacterAssig
     method: "PUT",
     body: JSON.stringify({ characters }),
   });
+export const buildShotPrompt = (shotId: number) =>
+  request<Shot>(`/api/shots/${shotId}/build-prompt`, { method: "POST" });
+
+// Generations (storyboard images)
+export const listGenerations = (shotId: number) =>
+  request<Generation[]>(`/api/shots/${shotId}/generations`);
+export const generateStoryboard = (shotId: number, seed?: number | null) =>
+  request<Generation>(`/api/shots/${shotId}/generate-storyboard`, {
+    method: "POST",
+    body: JSON.stringify({ seed: seed ?? null }),
+  });
+export const approveGeneration = (generationId: number) =>
+  request<Generation>(`/api/generations/${generationId}/approve`, { method: "POST" });
+export const rejectGeneration = (generationId: number) =>
+  request<Generation>(`/api/generations/${generationId}/reject`, { method: "POST" });
+export const activateGeneration = (generationId: number) =>
+  request<Generation>(`/api/generations/${generationId}/activate`, { method: "POST" });
+export const deleteGeneration = (generationId: number) =>
+  request<void>(`/api/generations/${generationId}`, { method: "DELETE" });

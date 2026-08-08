@@ -30,6 +30,13 @@ class Shot(TimestampedBase):
     characters: Mapped[list["ShotCharacter"]] = relationship(
         back_populates="shot", cascade="all, delete-orphan"
     )
+    generations: Mapped[list["Generation"]] = relationship(
+        back_populates="shot", cascade="all, delete-orphan"
+    )
+
+    @property
+    def active_generation(self) -> "Generation | None":
+        return next((g for g in self.generations if g.is_active), None)
 
 
 class ShotCharacter(TimestampedBase):

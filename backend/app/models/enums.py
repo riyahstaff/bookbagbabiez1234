@@ -70,3 +70,24 @@ class ShotType(str, enum.Enum):
     PAN = "PAN"
     TILT = "TILT"
     STATIC = "STATIC"
+
+
+class GenerationType(str, enum.Enum):
+    IMAGE = "IMAGE"  # storyboard (Phase 4)
+    VIDEO = "VIDEO"  # Phase 6 - same table, not built yet
+
+
+class GenerationStatus(str, enum.Enum):
+    QUEUED = "QUEUED"
+    PREPARING = "PREPARING"
+    RUNNING = "RUNNING"
+    PROCESSING = "PROCESSING"
+    COMPLETE = "COMPLETE"
+    FAILED = "FAILED"
+    CANCELED = "CANCELED"
+
+
+class ApprovalStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"

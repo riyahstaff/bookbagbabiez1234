@@ -7,6 +7,7 @@ from app.api.routers import (
     character_references,
     characters,
     episodes,
+    generations,
     locations,
     props,
     scenes,
@@ -46,6 +47,7 @@ app.include_router(locations.router)
 app.include_router(props.router)
 app.include_router(scenes.router)
 app.include_router(shots.router)
+app.include_router(generations.router)
 
 # Uploaded reference images/audio live under data/series/... Mounted at /media
 # rather than serving all of data/ directly, so the sqlite file (a sibling of

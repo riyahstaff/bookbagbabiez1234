@@ -27,3 +27,11 @@ def location_reference_path(series_code: str, location_code: str, filename: str)
 
 def prop_reference_path(series_code: str, prop_code: str, filename: str) -> str:
     return _asset_path(series_code, "props", prop_code, "references", filename=filename)
+
+
+def generation_output_path(
+    series_code: str, episode_code: str, shot_id: int, filename: str
+) -> str:
+    return _asset_path(
+        series_code, "episodes", episode_code, "shots", str(shot_id), "generations", filename=filename
+    )

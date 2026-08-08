@@ -11,6 +11,7 @@ import {
   listCharacters,
   listLocations,
   listShots,
+  mediaUrl,
   setSceneCharacters,
   updateScene,
 } from "@/lib/api";
@@ -299,14 +300,41 @@ export default function SceneDetailPage() {
           <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
             {shots.map((shot) => (
               <li key={shot.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <Link
-                    href={`/series/${seriesId}/episodes/${episodeId}/scenes/${sceneId}/shots/${shot.id}`}
-                    className="font-medium hover:underline"
-                  >
-                    Shot {shot.shot_number}: {shot.shot_type}
-                  </Link>
-                  <p className="text-xs text-slate-500">{shot.action || "(no action description)"}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-20 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
+                    {shot.active_generation?.output_path ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={mediaUrl(shot.active_generation.output_path)}
+                        alt={`Shot ${shot.shot_number} storyboard`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-slate-400">No image</span>
+                    )}
+                  </div>
+                  <div>
+                    <Link
+                      href={`/series/${seriesId}/episodes/${episodeId}/scenes/${sceneId}/shots/${shot.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      Shot {shot.shot_number}: {shot.shot_type}
+                    </Link>
+                    <p className="text-xs text-slate-500">{shot.action || "(no action description)"}</p>
+                    {shot.active_generation && (
+                      <span
+                        className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                          shot.active_generation.approval_status === "APPROVED"
+                            ? "bg-green-100 text-green-700"
+                            : shot.active_generation.approval_status === "REJECTED"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {shot.active_generation.approval_status}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Link
                   href={`/series/${seriesId}/episodes/${episodeId}/scenes/${sceneId}/shots/${shot.id}`}
