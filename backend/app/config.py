@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="ACS_", extra="ignore")
 
     database_url: str = f"sqlite:///{DATA_DIR / 'db.sqlite3'}"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     environment: str = "development"
 
 

@@ -4,17 +4,48 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 0 (Research & Architecture) — awaiting approval to begin Phase 1
+## Status: Phase 1 (App Shell) complete
 
-This repository currently contains **no application code**. It contains the Phase 0
-research and architecture deliverables: a verified survey of the current open-weight
-model landscape (video, voice, image, lip-sync), the licensing implications of each,
-and the proposed system architecture. Implementation begins only after these are
-reviewed and approved.
+Phase 0 (research and architecture) is done and documented below. Phase 1 adds a
+working application shell: Series/Character/Episode CRUD end to end, backed by a real
+database, through a real browser UI. There is still no AI provider code - no video,
+voice, image, or LLM generation happens yet. That starts in Phase 3+.
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — provider interfaces, repo layout, database schema, phased plan
+
+## Running it
+
+**With Docker (recommended):**
+
+```
+docker compose up --build
+```
+
+Frontend at http://localhost:3000, API at http://localhost:8000. Both bind to
+localhost only, per the security default in `docs/ARCHITECTURE.md`.
+
+**Manually, for development:**
+
+```
+# Backend
+cd backend
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/alembic upgrade head
+.venv/bin/uvicorn app.main:app --reload --port 8000
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to
+`frontend/.env.local` if you need to override any defaults - both work unmodified for
+local development.
+
+Run the backend test suite with `.venv/bin/pytest` from `backend/`.
 
 ## Design philosophy
 
@@ -26,14 +57,14 @@ reviewed and approved.
 2. **Local-first, cloud-optional.** The MVP pilot must run end-to-end on a single
    consumer GPU (or a few dollars of rented GPU time). Heavier workloads (batch
    rendering, higher-end models) can burst to rented cloud GPUs, never require them.
-2. **Storyboard before video.** Cheap image generation gates expensive video
+3. **Storyboard before video.** Cheap image generation gates expensive video
    generation. This is the single highest-leverage cost control in the whole system
    and is never optional, even in "quality mode."
-3. **Series → Episode → Scene → Shot → Version is the fundamental hierarchy.** Nothing
+4. **Series → Episode → Scene → Shot → Version is the fundamental hierarchy.** Nothing
    in the UI, database, or job system should be designed in a way that breaks this.
-4. **Human approval before expensive rendering.** Nothing generates video without an
+5. **Human approval before expensive rendering.** Nothing generates video without an
    approved storyboard unless a human explicitly overrides that.
-5. **Never lose work.** Every generation is versioned and preserved (including
+6. **Never lose work.** Every generation is versioned and preserved (including
    rejected ones, until explicit cleanup). Jobs are resumable after a crash.
 
 ## License

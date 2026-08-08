@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      # Bind to localhost only - not exposed on the network by default.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      ACS_DATABASE_URL: sqlite:////app/data/db.sqlite3
+      ACS_CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
