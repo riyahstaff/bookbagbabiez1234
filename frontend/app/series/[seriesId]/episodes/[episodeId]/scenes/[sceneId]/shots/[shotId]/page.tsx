@@ -281,7 +281,12 @@ export default function ShotDetailPage() {
       <StoryboardPanel shotId={shotId} onShotChanged={refreshShot} />
       <VoicePanel shotId={shotId} seriesId={seriesId} track="DIALOGUE" text={shot.dialogue} onShotChanged={refreshShot} />
       <VoicePanel shotId={shotId} seriesId={seriesId} track="NARRATION" text={shot.narration} onShotChanged={refreshShot} />
-      <VideoPanel shotId={shotId} activeImageGeneration={shot.active_image_generation} onShotChanged={refreshShot} />
+      <VideoPanel
+        shotId={shotId}
+        activeImageGeneration={shot.active_image_generation}
+        activeDialogueGeneration={shot.active_dialogue_generation}
+        onShotChanged={refreshShot}
+      />
     </div>
   );
 }

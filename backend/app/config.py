@@ -21,19 +21,27 @@ class Settings(BaseSettings):
     llm_mechanical_provider: str = "mock"
     llm_mechanical_model: str | None = None
 
-    # "mock" (default, zero cost/setup, draws a real placeholder image) | "comfyui"
+    # "mock" (default, zero cost/setup, draws a real placeholder image) |
+    # "comfyui" (self-hosted) | "fal" (hosted, pay-per-call - needs FAL_KEY)
     image_provider: str = "mock"
     comfyui_base_url: str = "http://127.0.0.1:8188"
 
-    # "mock" (default, zero cost/setup, writes a real placeholder WAV tone) | "openai_compatible"
-    # (covers self-hosted Chatterbox/CosyVoice2/Qwen3-TTS servers exposing an
-    # OpenAI-style /audio/speech endpoint, or real OpenAI TTS - point TTS_BASE_URL at it)
+    # "mock" (default, zero cost/setup, writes a real placeholder WAV tone) |
+    # "openai_compatible" (covers self-hosted Chatterbox/CosyVoice2/Qwen3-TTS
+    # servers exposing an OpenAI-style /audio/speech endpoint, or real OpenAI
+    # TTS - point TTS_BASE_URL at it) | "fal" (hosted Chatterbox - needs FAL_KEY)
     voice_provider: str = "mock"
     voice_model: str | None = None
 
     # "mock" (default, zero cost/setup, animates the reference image into a
-    # real placeholder GIF) | "comfyui" (Wan2.2-TI2V-5B, reuses comfyui_base_url)
+    # real placeholder GIF) | "comfyui" (self-hosted Wan2.2-TI2V-5B, reuses
+    # comfyui_base_url) | "fal" (hosted Wan2.2-TI2V-5B - needs FAL_KEY)
     video_provider: str = "mock"
+
+    # "mock" (default, zero cost/setup, returns the video untouched) | "fal"
+    # (hosted MuseTalk by default, LatentSync for quality mode - needs FAL_KEY)
+    lipsync_provider: str = "mock"
+    lipsync_quality_mode: bool = False
 
 
 @lru_cache

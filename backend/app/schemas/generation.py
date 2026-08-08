@@ -46,3 +46,7 @@ class GenerateVoiceRequest(BaseModel):
 class GenerateVideoRequest(BaseModel):
     seed: int | None = None
     override_approval_gate: bool = False
+
+
+class GenerateLipSyncRequest(BaseModel):
+    override_approval_gate: bool = False

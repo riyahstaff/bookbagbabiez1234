@@ -5,6 +5,7 @@ import {
   activateGeneration,
   approveGeneration,
   deleteGeneration,
+  generateLipSync,
   generateVideo,
   listGenerations,
   mediaUrl,
@@ -20,15 +21,23 @@ function isAnimatedImage(path: string): boolean {
 interface VideoPanelProps {
   shotId: number;
   activeImageGeneration: Generation | null;
+  activeDialogueGeneration: Generation | null;
   onShotChanged?: () => void;
 }
 
-export default function VideoPanel({ shotId, activeImageGeneration, onShotChanged }: VideoPanelProps) {
+export default function VideoPanel({
+  shotId,
+  activeImageGeneration,
+  activeDialogueGeneration,
+  onShotChanged,
+}: VideoPanelProps) {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [syncingLips, setSyncingLips] = useState(false);
   const [seed, setSeed] = useState("");
   const [overrideGate, setOverrideGate] = useState(false);
+  const [overrideLipSyncGate, setOverrideLipSyncGate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
@@ -47,6 +56,11 @@ export default function VideoPanel({ shotId, activeImageGeneration, onShotChange
   const imageApproved = activeImageGeneration?.approval_status === "APPROVED";
   const canGenerate = hasImage && (imageApproved || overrideGate);
 
+  const activeVideo = generations.find((g) => g.is_active) ?? null;
+  const hasDialogue = !!activeDialogueGeneration;
+  const videoApproved = activeVideo?.approval_status === "APPROVED";
+  const canSyncLips = !!activeVideo && hasDialogue && (videoApproved || overrideLipSyncGate);
+
   async function handleGenerate() {
     if (!canGenerate) return;
     setGenerating(true);
@@ -60,6 +74,21 @@ export default function VideoPanel({ shotId, activeImageGeneration, onShotChange
       setError(err instanceof Error ? err.message : "Failed to generate video");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleSyncLips() {
+    if (!canSyncLips) return;
+    setSyncingLips(true);
+    setError(null);
+    try {
+      await generateLipSync(shotId, { overrideApprovalGate: overrideLipSyncGate });
+      await refresh();
+      onShotChanged?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate lip-sync");
+    } finally {
+      setSyncingLips(false);
     }
   }
 
@@ -140,6 +169,46 @@ export default function VideoPanel({ shotId, activeImageGeneration, onShotChange
             className="rounded bg-slate-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
           >
             {generating ? "Generating..." : "Generate Video"}
+          </button>
+        </div>
+      )}
+
+      <div>
+        <h3 className="text-sm font-medium text-slate-700">Lip-Sync</h3>
+        <p className="text-xs text-slate-500">
+          Runs a separate pass over the shot&apos;s active video to match mouth movement to its dialogue
+          audio - produces a new video version competing for the same active slot, so you can compare
+          against the unsynced take and pick whichever looks better.
+        </p>
+      </div>
+
+      {!activeVideo ? (
+        <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          This shot has no active video yet - generate and activate one above first.
+        </p>
+      ) : !hasDialogue ? (
+        <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          This shot has no active dialogue audio yet - lip-sync needs speech to match to.
+        </p>
+      ) : (
+        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          {!videoApproved && (
+            <label className="flex items-center gap-2 pb-1.5 text-sm text-amber-700">
+              <input
+                type="checkbox"
+                checked={overrideLipSyncGate}
+                onChange={(e) => setOverrideLipSyncGate(e.target.checked)}
+                className="h-4 w-4"
+              />
+              The active video isn&apos;t approved yet - generate anyway
+            </label>
+          )}
+          <button
+            onClick={handleSyncLips}
+            disabled={syncingLips || !canSyncLips}
+            className="rounded bg-slate-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {syncingLips ? "Syncing..." : "Generate Lip-Sync"}
           </button>
         </div>
       )}

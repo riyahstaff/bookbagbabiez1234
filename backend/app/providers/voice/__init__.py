@@ -12,6 +12,10 @@ def _build_provider(name: str, model: str | None) -> VoiceProvider:
         from app.providers.voice.openai_compatible import OpenAICompatibleVoiceProvider
 
         return OpenAICompatibleVoiceProvider(model=model or "tts-1")
+    if name == "fal":
+        from app.providers.voice.fal import FalVoiceProvider
+
+        return FalVoiceProvider()
     raise ValueError(f"Unknown voice provider: {name!r}")
 
 

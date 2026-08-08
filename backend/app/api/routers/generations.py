@@ -18,12 +18,15 @@ from app.models import (
 from app.pipeline.shot_prompt import build_shot_prompt
 from app.providers.image import get_image_provider
 from app.providers.image.base import ImageProvider
+from app.providers.lipsync import get_lipsync_provider
+from app.providers.lipsync.base import LipSyncProvider
 from app.providers.video import get_video_provider
 from app.providers.video.base import VideoProvider
 from app.providers.voice import get_voice_provider
 from app.providers.voice.base import VoiceProvider
 from app.qc import QCResult, check_audio, check_image, check_video
 from app.schemas.generation import (
+    GenerateLipSyncRequest,
     GenerateStoryboardRequest,
     GenerateVideoRequest,
     GenerateVoiceRequest,
@@ -285,6 +288,75 @@ def generate_video(
             negative_prompt=shot.negative_prompt,
             seed=payload.seed,
             duration_seconds=shot.duration_seconds,
+        )
+        episode = shot.scene.episode
+        relative_path = generation_output_path(
+            episode.series.series_code,
+            episode.episode_code,
+            shot_id,
+            f"{generation.id}.{result.file_extension}",
+        )
+        storage.save(relative_path, result.video_bytes)
+        generation.output_path = relative_path
+        generation.model_name = result.model_name
+        generation.status = GenerationStatus.COMPLETE
+        _run_qc(generation, lambda: check_video(result.video_bytes, result.file_extension))
+    except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
+        generation.status = GenerationStatus.FAILED
+        generation.error_message = str(exc)
+
+    db.commit()
+    db.refresh(generation)
+    return generation
+
+
+@router.post("/api/shots/{shot_id}/generate-lipsync", response_model=GenerationRead, status_code=201)
+def generate_lipsync(
+    shot_id: int,
+    payload: GenerateLipSyncRequest,
+    db: Session = Depends(get_db),
+    provider: LipSyncProvider = Depends(get_lipsync_provider),
+    storage: StorageBackend = Depends(get_storage),
+):
+    shot = _get_shot_or_404(db, shot_id)
+    video_generation = shot.active_video_generation
+    dialogue_generation = shot.active_dialogue_generation
+
+    if not video_generation or not video_generation.output_path:
+        raise HTTPException(
+            status_code=409,
+            detail="This shot has no active video yet - generate and activate one first.",
+        )
+    if not dialogue_generation or not dialogue_generation.output_path:
+        raise HTTPException(
+            status_code=409,
+            detail="This shot has no active dialogue audio yet - lip-sync needs speech to match to.",
+        )
+    if not payload.override_approval_gate and video_generation.approval_status != ApprovalStatus.APPROVED:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This shot's active video is not approved yet. Approve it first, "
+                "or retry with override_approval_gate=true."
+            ),
+        )
+
+    video_bytes = storage.read(video_generation.output_path)
+    video_file_extension = video_generation.output_path.rsplit(".", 1)[-1]
+    audio_bytes = storage.read(dialogue_generation.output_path)
+
+    generation = Generation(
+        shot_id=shot_id,
+        generation_type=GenerationType.VIDEO,
+        provider_name=type(provider).__name__,
+        status=GenerationStatus.RUNNING,
+    )
+    db.add(generation)
+    db.flush()
+
+    try:
+        result = provider.sync_lips(
+            video_bytes=video_bytes, video_file_extension=video_file_extension, audio_bytes=audio_bytes
         )
         episode = shot.scene.episode
         relative_path = generation_output_path(

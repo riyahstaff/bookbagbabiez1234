@@ -319,6 +319,11 @@ export const generateVideo = (
       override_approval_gate: options?.overrideApprovalGate ?? false,
     }),
   });
+export const generateLipSync = (shotId: number, options?: { overrideApprovalGate?: boolean }) =>
+  request<Generation>(`/api/shots/${shotId}/generate-lipsync`, {
+    method: "POST",
+    body: JSON.stringify({ override_approval_gate: options?.overrideApprovalGate ?? false }),
+  });
 export const approveGeneration = (generationId: number) =>
   request<Generation>(`/api/generations/${generationId}/approve`, { method: "POST" });
 export const rejectGeneration = (generationId: number) =>

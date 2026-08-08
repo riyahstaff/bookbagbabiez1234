@@ -6,6 +6,12 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./data:/app/data
+    env_file:
+      # Optional: copy backend/.env.example to backend/.env to pick a real
+      # provider (image/voice/video/lipsync) and set its API key - without
+      # this file, everything just runs on the zero-cost Mock defaults.
+      - path: backend/.env
+        required: false
     environment:
       ACS_DATABASE_URL: sqlite:////app/data/db.sqlite3
       ACS_CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'

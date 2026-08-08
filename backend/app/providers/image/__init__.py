@@ -13,6 +13,10 @@ def _build_provider(name: str) -> ImageProvider:
 
         settings = get_settings()
         return ComfyUIImageProvider(base_url=settings.comfyui_base_url)
+    if name == "fal":
+        from app.providers.image.fal import FalImageProvider
+
+        return FalImageProvider()
     raise ValueError(f"Unknown image provider: {name!r}")
 
 
