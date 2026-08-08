@@ -15,10 +15,16 @@ from app.models import (
     Generation,
     GenerationStatus,
     GenerationType,
+    Location,
+    LocationReference,
+    LocationReferenceCategory,
     Shot,
     Voice,
 )
+from app.pipeline.compositing import composite_multi_character_shot
 from app.pipeline.shot_prompt import build_shot_prompt
+from app.providers.background_removal import get_background_removal_provider
+from app.providers.background_removal.base import BackgroundRemovalProvider
 from app.providers.image import get_image_provider
 from app.providers.image.base import ImageProvider
 from app.providers.lipsync import get_lipsync_provider
@@ -65,6 +71,37 @@ def _pick_reference_image(character: Character) -> CharacterReference | None:
     return character.references[0] if character.references else None
 
 
+def _pick_location_reference(location: Location | None) -> LocationReference | None:
+    # Same idea as _pick_reference_image: a wide establishing plate is the
+    # most reusable background; any uploaded reference beats generating a
+    # fresh one for the multi-character compositing path.
+    if not location:
+        return None
+    for reference in location.references:
+        if reference.category == LocationReferenceCategory.WIDE_ESTABLISHING:
+            return reference
+    return location.references[0] if location.references else None
+
+
+_SQLITE_MAX_INT = 2**63 - 1
+
+
+def _clamp_seed(seed: int | None) -> int | None:
+    # SQLite (and Python's sqlite3 driver underneath SQLAlchemy) can only
+    # store a signed 64-bit integer. fal.ai's returned seeds are occasionally
+    # drawn from a wider unsigned range and overflow that on save - a real
+    # crash hit verifying multi-character compositing against a live
+    # fal-ai/instant-character response, not a hypothetical. Folding into
+    # range keeps a real, deterministic value for display instead of
+    # crashing generate_storyboard(); reusing that exact folded value as an
+    # explicit seed on a later request may not reproduce the original
+    # unfolded draw, which is an acceptable tradeoff for a display/bookkeeping
+    # field.
+    if seed is None:
+        return None
+    return seed % (_SQLITE_MAX_INT + 1)
+
+
 def _run_qc(generation: Generation, check: Callable[[], QCResult]) -> None:
     # Advisory only - a bug in a QC check must never fail an otherwise
     # successful generation, so leave the score unset (not a false 0.0) and
@@ -96,6 +133,7 @@ def generate_storyboard(
     payload: GenerateStoryboardRequest,
     db: Session = Depends(get_db),
     provider: ImageProvider = Depends(get_image_provider),
+    background_removal_provider: BackgroundRemovalProvider = Depends(get_background_removal_provider),
     storage: StorageBackend = Depends(get_storage),
 ):
     shot = _get_shot_or_404(db, shot_id)
@@ -108,31 +146,67 @@ def generate_storyboard(
         shot.negative_prompt = shot.negative_prompt or negative_prompt
         db.flush()
 
+    # Single character with a reference: lock identity to it directly (see
+    # FalImageProvider._generate_from_reference). 2+ characters can only take
+    # that path too if EVERY one of them has a reference - composite_references
+    # stays None (falling back to plain text generation, as before) rather
+    # than mixing identity-locked and un-anchored characters in one shot.
     reference_image_bytes = None
-    if provider.supports_reference_image() and len(characters_visible) == 1:
-        reference = _pick_reference_image(characters_visible[0])
-        if reference:
-            reference_image_bytes = storage.read(reference.image_path)
+    composite_references: dict[int, bytes] | None = None
+    if provider.supports_reference_image():
+        if len(characters_visible) == 1:
+            reference = _pick_reference_image(characters_visible[0])
+            if reference:
+                reference_image_bytes = storage.read(reference.image_path)
+        elif len(characters_visible) >= 2:
+            references = {character.id: _pick_reference_image(character) for character in characters_visible}
+            if all(references.values()):
+                composite_references = {
+                    character_id: storage.read(reference.image_path)
+                    for character_id, reference in references.items()
+                }
 
     generation = Generation(
         shot_id=shot_id,
         generation_type=GenerationType.IMAGE,
-        provider_name=type(provider).__name__,
+        provider_name=(
+            f"{type(provider).__name__}+{type(background_removal_provider).__name__} "
+            "(multi-character composite)"
+            if composite_references is not None
+            else type(provider).__name__
+        ),
         prompt=shot.visual_prompt,
         negative_prompt=shot.negative_prompt,
-        seed=payload.seed,
+        seed=_clamp_seed(payload.seed),
         status=GenerationStatus.RUNNING,
     )
     db.add(generation)
     db.flush()
 
     try:
-        result = provider.generate_image(
-            prompt=shot.visual_prompt or "",
-            negative_prompt=shot.negative_prompt,
-            seed=payload.seed,
-            reference_image_bytes=reference_image_bytes,
-        )
+        if composite_references is not None:
+            location_reference = _pick_location_reference(shot.scene.location)
+            location_background_bytes = (
+                storage.read(location_reference.image_path) if location_reference else None
+            )
+            result = composite_multi_character_shot(
+                shot=shot,
+                scene=shot.scene,
+                series=shot.scene.episode.series,
+                characters=characters_visible,
+                reference_bytes_by_character=composite_references,
+                location_background_bytes=location_background_bytes,
+                image_provider=provider,
+                background_removal_provider=background_removal_provider,
+                seed=payload.seed,
+            )
+        else:
+            result = provider.generate_image(
+                prompt=shot.visual_prompt or "",
+                negative_prompt=shot.negative_prompt,
+                seed=payload.seed,
+                reference_image_bytes=reference_image_bytes,
+            )
         episode = shot.scene.episode
         relative_path = generation_output_path(
             episode.series.series_code, episode.episode_code, shot_id, f"{generation.id}.png"
@@ -140,7 +214,7 @@ def generate_storyboard(
         storage.save(relative_path, result.image_bytes)
         generation.output_path = relative_path
         generation.model_name = result.model_name
-        generation.seed = result.seed_used
+        generation.seed = _clamp_seed(result.seed_used)
         generation.status = GenerationStatus.COMPLETE
         _run_qc(generation, lambda: check_image(result.image_bytes))
     except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here

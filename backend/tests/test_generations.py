@@ -67,6 +67,21 @@ def test_generate_storyboard_respects_explicit_seed(client):
     assert generation["seed"] == 12345
 
 
+def test_generate_storyboard_clamps_oversized_seed_instead_of_crashing(client):
+    # SQLite can only store a signed 64-bit integer; a real fal-ai/
+    # instant-character response returned a seed above that range and
+    # crashed db.commit() with OverflowError - this is that exact value.
+    _, _, shot_id = _create_shot(client)
+    oversized_seed = 2**64 - 1
+
+    response = client.post(f"/api/shots/{shot_id}/generate-storyboard", json={"seed": oversized_seed})
+
+    assert response.status_code == 201
+    generation = response.json()
+    assert generation["status"] == "COMPLETE"
+    assert generation["seed"] == oversized_seed % (2**63)
+
+
 def test_generate_storyboard_on_missing_shot_404s(client):
     response = client.post("/api/shots/999999/generate-storyboard", json={})
     assert response.status_code == 404

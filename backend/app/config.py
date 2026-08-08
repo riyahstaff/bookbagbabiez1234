@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     lipsync_provider: str = "mock"
     lipsync_quality_mode: bool = False
 
+    # "mock" (default, zero cost/setup, chroma-keys a solid corner color) |
+    # "fal" (hosted BiRefNet - needs FAL_KEY). Only used by the
+    # multi-character compositing pipeline (pipeline/compositing.py) to cut
+    # out each character generated on a plain background before pasting them
+    # onto a shared scene background - single-character shots never call it.
+    background_removal_provider: str = "mock"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,10 +1,16 @@
+from app.providers.background_removal import get_background_removal_provider
 from app.providers.image import get_image_provider
 from app.providers.image.base import ImageGenerationResult, ImageProvider
 
 
 class _RecordingReferenceProvider(ImageProvider):
     """Records what reference_image_bytes it was called with, so tests can
-    assert on exactly what the router decided to pass through."""
+    assert on exactly what the router decided to pass through. Only used for
+    the single-character and no-compositing paths below, where the router
+    never inspects the returned image bytes beyond saving them - the
+    multi-character compositing tests further down need a provider that
+    returns real, decodable images instead, since compositing.py actually
+    opens them with Pillow."""
 
     def __init__(self):
         self.calls = []
@@ -80,14 +86,18 @@ def test_single_visible_character_without_reference_passes_none(client):
     assert provider.calls == [None]
 
 
-def test_multiple_visible_characters_passes_none_even_with_references(client):
+def test_multiple_visible_characters_with_only_some_references_passes_none(client):
+    # Compositing (see test_compositing.py and the dedicated router tests in
+    # test_multi_character_compositing.py) only kicks in when EVERY visible
+    # character has a reference - with Nova missing one here, this must
+    # still fall back to the old plain-text path rather than mixing an
+    # identity-locked Marcus with an un-anchored Nova in the same shot.
     from app.main import app
 
     series_id, shot_id = _setup(client)
     marcus = client.post(f"/api/series/{series_id}/characters", json={"name": "Marcus"}).json()
     nova = client.post(f"/api/series/{series_id}/characters", json={"name": "Nova"}).json()
     _upload_reference(client, marcus["id"])
-    _upload_reference(client, nova["id"])
     client.put(
         f"/api/shots/{shot_id}/characters",
         json={"characters": [{"character_id": marcus["id"]}, {"character_id": nova["id"]}]},
@@ -96,11 +106,12 @@ def test_multiple_visible_characters_passes_none_even_with_references(client):
     provider = _RecordingReferenceProvider()
     app.dependency_overrides[get_image_provider] = lambda: provider
     try:
-        client.post(f"/api/shots/{shot_id}/generate-storyboard", json={})
+        response = client.post(f"/api/shots/{shot_id}/generate-storyboard", json={})
     finally:
         del app.dependency_overrides[get_image_provider]
 
     assert provider.calls == [None]
+    assert "composite" not in response.json()["provider_name"].lower()
 
 
 def test_no_visible_characters_passes_none(client):
