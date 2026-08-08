@@ -122,6 +122,33 @@ export default function CharacterDetailPage() {
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {savedAt && <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">Saved.</p>}
 
+      <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+        <div>
+          <h2 className="text-lg font-medium">Reference Images</h2>
+          <p className="text-sm text-slate-500">
+            Upload a picture of this character here. It gets pulled into every generation request
+            involving them, so their look stays consistent shot to shot instead of drifting.
+          </p>
+        </div>
+        <ReferenceGallery
+          tagLabel="Category"
+          categories={CHARACTER_REFERENCE_CATEGORIES}
+          items={references.map((r) => ({ id: r.id, imageUrl: mediaUrl(r.image_path), tag: r.category }))}
+          onUpload={async (file, category) => {
+            await uploadCharacterReference(
+              characterId,
+              file,
+              category as (typeof CHARACTER_REFERENCE_CATEGORIES)[number],
+            );
+            setReferences(await listCharacterReferences(characterId));
+          }}
+          onDelete={async (id) => {
+            await deleteCharacterReference(id);
+            setReferences(await listCharacterReferences(characterId));
+          }}
+        />
+      </section>
+
       <form onSubmit={handleSave} className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField label="Name" value={form.name ?? ""} onChange={(e) => set("name", e.target.value)} />
@@ -197,33 +224,6 @@ export default function CharacterDetailPage() {
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
-
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-lg font-medium">Reference Images</h2>
-          <p className="text-sm text-slate-500">
-            These get pulled into every generation request involving this character. Never let hair,
-            skin tone, clothing, or body proportions drift from these unless the script requires it.
-          </p>
-        </div>
-        <ReferenceGallery
-          tagLabel="Category"
-          categories={CHARACTER_REFERENCE_CATEGORIES}
-          items={references.map((r) => ({ id: r.id, imageUrl: mediaUrl(r.image_path), tag: r.category }))}
-          onUpload={async (file, category) => {
-            await uploadCharacterReference(
-              characterId,
-              file,
-              category as (typeof CHARACTER_REFERENCE_CATEGORIES)[number],
-            );
-            setReferences(await listCharacterReferences(characterId));
-          }}
-          onDelete={async (id) => {
-            await deleteCharacterReference(id);
-            setReferences(await listCharacterReferences(characterId));
-          }}
-        />
-      </section>
 
       <section className="space-y-3">
         <div>

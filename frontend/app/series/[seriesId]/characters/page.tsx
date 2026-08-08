@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createCharacter, listCharacters } from "@/lib/api";
+import { createCharacter, listCharacterReferences, listCharacters, mediaUrl } from "@/lib/api";
 import { TextField } from "@/components/Field";
 import type { Character } from "@/lib/types";
 
@@ -12,6 +12,7 @@ export default function CharacterListPage() {
   const seriesId = Number(params.seriesId);
 
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -21,8 +22,20 @@ export default function CharacterListPage() {
   async function refresh() {
     setLoading(true);
     try {
-      setCharacters(await listCharacters(seriesId));
+      const loaded = await listCharacters(seriesId);
+      setCharacters(loaded);
       setError(null);
+
+      const entries = await Promise.all(
+        loaded.map(async (character) => {
+          const refs = await listCharacterReferences(character.id).catch(() => []);
+          const front = refs.find((r) => r.category === "FRONT") ?? refs[0];
+          return [character.id, front ? mediaUrl(front.image_path) : null] as const;
+        }),
+      );
+      setThumbnails(
+        Object.fromEntries(entries.filter(([, url]) => url !== null)) as Record<number, string>,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load characters");
     } finally {
@@ -96,17 +109,34 @@ export default function CharacterListPage() {
         <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
           {characters.map((character) => (
             <li key={character.id} className="flex items-center justify-between px-4 py-3">
-              <div>
+              <div className="flex items-center gap-3">
                 <Link
                   href={`/series/${seriesId}/characters/${character.id}`}
-                  className="font-medium hover:underline"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100"
                 >
-                  {character.name}
+                  {thumbnails[character.id] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbnails[character.id]}
+                      alt={character.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-slate-400">No photo</span>
+                  )}
                 </Link>
-                <p className="text-xs text-slate-500">
-                  {character.character_code}
-                  {character.description ? ` · ${character.description}` : ""}
-                </p>
+                <div>
+                  <Link
+                    href={`/series/${seriesId}/characters/${character.id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {character.name}
+                  </Link>
+                  <p className="text-xs text-slate-500">
+                    {character.character_code}
+                    {character.description ? ` · ${character.description}` : ""}
+                  </p>
+                </div>
               </div>
               <Link
                 href={`/series/${seriesId}/characters/${character.id}`}
