@@ -1,5 +1,6 @@
 import pytest
 
+import app.providers.image.fal as fal_image
 from app.providers.image.fal import FalImageProvider
 
 
@@ -85,3 +86,60 @@ def test_api_key_falls_back_to_environment(monkeypatch):
     monkeypatch.setenv("FAL_KEY", "from-env")
     provider = FalImageProvider()
     assert provider.api_key == "from-env"
+
+
+def test_supports_reference_image_is_true():
+    assert FalImageProvider(api_key="test-key").supports_reference_image() is True
+
+
+class _FakeGetResponse:
+    def __init__(self, content):
+        self.content = content
+
+    def raise_for_status(self):
+        pass
+
+
+class _FakeReferenceClient:
+    def __init__(self, result_bytes):
+        self.result_bytes = result_bytes
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def get(self, url):
+        return _FakeGetResponse(self.result_bytes)
+
+
+def test_generate_image_with_reference_uses_instant_character(monkeypatch):
+    upload_calls = []
+    queue_calls = []
+    monkeypatch.setattr(
+        fal_image,
+        "upload_file",
+        lambda client, key, content, filename, content_type: upload_calls.append(
+            (content, filename, content_type)
+        )
+        or "https://v3b.fal.media/files/x/ref.png",
+    )
+    monkeypatch.setattr(
+        fal_image,
+        "run_queue_job",
+        lambda client, key, endpoint, payload: queue_calls.append((endpoint, payload))
+        or {"images": [{"url": "https://v3b.fal.media/files/x/out.jpg"}], "seed": 12345},
+    )
+    monkeypatch.setattr(fal_image.httpx, "Client", lambda timeout: _FakeReferenceClient(b"consistent-bytes"))
+
+    provider = FalImageProvider(api_key="test-key")
+    result = provider.generate_image(prompt="waving hello", reference_image_bytes=b"ref-image-bytes")
+
+    assert result.image_bytes == b"consistent-bytes"
+    assert result.model_name == "fal-ai/instant-character"
+    assert result.seed_used == 12345
+    assert upload_calls[0][0] == b"ref-image-bytes"
+    endpoint, payload = queue_calls[0]
+    assert endpoint == "fal-ai/instant-character"
+    assert payload == {"prompt": "waving hello", "image_url": "https://v3b.fal.media/files/x/ref.png"}

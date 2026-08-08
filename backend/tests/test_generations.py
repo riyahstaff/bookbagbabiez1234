@@ -83,7 +83,9 @@ def test_list_generations_ordered_most_recent_first(client):
 
 
 class _FailingImageProvider(ImageProvider):
-    def generate_image(self, prompt, negative_prompt=None, seed=None, width=1024, height=576):
+    def generate_image(
+        self, prompt, negative_prompt=None, seed=None, width=1024, height=576, reference_image_bytes=None
+    ):
         raise RuntimeError("provider is down")
 
 

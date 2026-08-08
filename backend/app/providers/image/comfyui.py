@@ -34,6 +34,7 @@ class ComfyUIImageProvider(ImageProvider):
         seed: int | None = None,
         width: int = 1024,
         height: int = 576,
+        reference_image_bytes: bytes | None = None,
     ) -> ImageGenerationResult:
         seed_used = seed if seed is not None else int(time.time() * 1000) % (2**31 - 1)
         workflow = json.loads(self.workflow_path.read_text())

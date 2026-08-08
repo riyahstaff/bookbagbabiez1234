@@ -9,6 +9,9 @@ from app.database import get_db
 from app.models import (
     ApprovalStatus,
     AudioTrack,
+    Character,
+    CharacterReference,
+    CharacterReferenceCategory,
     Generation,
     GenerationStatus,
     GenerationType,
@@ -53,6 +56,15 @@ def _get_generation_or_404(db: Session, generation_id: int) -> Generation:
     return generation
 
 
+def _pick_reference_image(character: Character) -> CharacterReference | None:
+    # FRONT is the most identity-representative category when available;
+    # any uploaded reference beats none for a single-character shot.
+    for reference in character.references:
+        if reference.category == CharacterReferenceCategory.FRONT:
+            return reference
+    return character.references[0] if character.references else None
+
+
 def _run_qc(generation: Generation, check: Callable[[], QCResult]) -> None:
     # Advisory only - a bug in a QC check must never fail an otherwise
     # successful generation, so leave the score unset (not a false 0.0) and
@@ -87,14 +99,20 @@ def generate_storyboard(
     storage: StorageBackend = Depends(get_storage),
 ):
     shot = _get_shot_or_404(db, shot_id)
+    characters_visible = [sc.character for sc in shot.characters]
 
     if not shot.visual_prompt:
-        characters_visible = [sc.character for sc in shot.characters]
         series = shot.scene.episode.series
         visual_prompt, negative_prompt = build_shot_prompt(shot, shot.scene, series, characters_visible)
         shot.visual_prompt = visual_prompt
         shot.negative_prompt = shot.negative_prompt or negative_prompt
         db.flush()
+
+    reference_image_bytes = None
+    if provider.supports_reference_image() and len(characters_visible) == 1:
+        reference = _pick_reference_image(characters_visible[0])
+        if reference:
+            reference_image_bytes = storage.read(reference.image_path)
 
     generation = Generation(
         shot_id=shot_id,
@@ -113,6 +131,7 @@ def generate_storyboard(
             prompt=shot.visual_prompt or "",
             negative_prompt=shot.negative_prompt,
             seed=payload.seed,
+            reference_image_bytes=reference_image_bytes,
         )
         episode = shot.scene.episode
         relative_path = generation_output_path(
