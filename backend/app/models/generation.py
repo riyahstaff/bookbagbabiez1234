@@ -45,7 +45,11 @@ class Generation(TimestampedBase):
     error_message: Mapped[str | None] = mapped_column(Text, default=None)
     output_path: Mapped[str | None] = mapped_column(String(500), default=None)
     preview_path: Mapped[str | None] = mapped_column(String(500), default=None)
+    # Set automatically by app/qc/ right after a generation completes -
+    # advisory only, never blocks approve/reject/activate. See qc_notes for
+    # what specifically was (or wasn't) flagged.
     quality_score: Mapped[float | None] = mapped_column(Float, default=None)
+    qc_notes: Mapped[str | None] = mapped_column(Text, default=None)
     approval_status: Mapped[ApprovalStatus] = mapped_column(
         SAEnum(ApprovalStatus), default=ApprovalStatus.PENDING, nullable=False
     )

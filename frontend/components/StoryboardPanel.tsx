@@ -28,7 +28,7 @@ export default function StoryboardPanel({ shotId, onShotChanged }: StoryboardPan
 
   function refresh() {
     return listGenerations(shotId)
-      .then(setGenerations)
+      .then((all) => setGenerations(all.filter((g) => g.generation_type === "IMAGE")))
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load generations"));
   }
 

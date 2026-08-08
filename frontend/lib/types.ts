@@ -386,6 +386,7 @@ export interface Generation {
   output_path: string | null;
   preview_path: string | null;
   quality_score: number | null;
+  qc_notes: string | null;
   approval_status: ApprovalStatus;
   is_active: boolean;
   created_at: string;

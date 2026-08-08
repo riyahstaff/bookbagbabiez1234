@@ -1,5 +1,6 @@
 import hashlib
 import json
+from collections.abc import Callable
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -21,6 +22,7 @@ from app.providers.video import get_video_provider
 from app.providers.video.base import VideoProvider
 from app.providers.voice import get_voice_provider
 from app.providers.voice.base import VoiceProvider
+from app.qc import QCResult, check_audio, check_image, check_video
 from app.schemas.generation import (
     GenerateStoryboardRequest,
     GenerateVideoRequest,
@@ -46,6 +48,18 @@ def _get_generation_or_404(db: Session, generation_id: int) -> Generation:
     if not generation:
         raise HTTPException(status_code=404, detail="Generation not found")
     return generation
+
+
+def _run_qc(generation: Generation, check: Callable[[], QCResult]) -> None:
+    # Advisory only - a bug in a QC check must never fail an otherwise
+    # successful generation, so leave the score unset (not a false 0.0) and
+    # explain why rather than letting the exception propagate.
+    try:
+        result = check()
+        generation.quality_score = result.score
+        generation.qc_notes = result.notes
+    except Exception as exc:  # noqa: BLE001
+        generation.qc_notes = f"Automated QC failed to run: {exc}"
 
 
 @router.get("/api/shots/{shot_id}/generations", response_model=list[GenerationRead])
@@ -106,6 +120,7 @@ def generate_storyboard(
         generation.model_name = result.model_name
         generation.seed = result.seed_used
         generation.status = GenerationStatus.COMPLETE
+        _run_qc(generation, lambda: check_image(result.image_bytes))
     except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
         generation.status = GenerationStatus.FAILED
         generation.error_message = str(exc)
@@ -182,6 +197,8 @@ def generate_voice(
         generation.output_path = cached.output_path
         generation.model_name = cached.model_name
         generation.status = GenerationStatus.COMPLETE
+        generation.quality_score = cached.quality_score
+        generation.qc_notes = cached.qc_notes
     else:
         try:
             extra_settings = {
@@ -204,6 +221,7 @@ def generate_voice(
             generation.output_path = relative_path
             generation.model_name = result.model_name
             generation.status = GenerationStatus.COMPLETE
+            _run_qc(generation, lambda: check_audio(result.audio_bytes))
         except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
             generation.status = GenerationStatus.FAILED
             generation.error_message = str(exc)
@@ -279,6 +297,7 @@ def generate_video(
         generation.output_path = relative_path
         generation.model_name = result.model_name
         generation.status = GenerationStatus.COMPLETE
+        _run_qc(generation, lambda: check_video(result.video_bytes, result.file_extension))
     except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
         generation.status = GenerationStatus.FAILED
         generation.error_message = str(exc)

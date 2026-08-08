@@ -19,6 +19,12 @@ const APPROVAL_COLORS: Record<Generation["approval_status"], string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
+function qcBadgeColor(score: number): string {
+  if (score >= 0.8) return "bg-green-100 text-green-700";
+  if (score >= 0.5) return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-700";
+}
+
 interface GenerationGalleryProps {
   generations: Generation[];
   busyId: number | null;
@@ -67,8 +73,19 @@ export default function GenerationGallery({
               {generation.is_active && (
                 <span className="rounded bg-slate-900 px-1.5 py-0.5 font-medium text-white">Active</span>
               )}
+              {generation.quality_score !== null && (
+                <span
+                  className={`rounded px-1.5 py-0.5 font-medium ${qcBadgeColor(generation.quality_score)}`}
+                  title={generation.qc_notes ?? undefined}
+                >
+                  QC {Math.round(generation.quality_score * 100)}
+                </span>
+              )}
               {generation.seed !== null && <span className="text-slate-500">seed={generation.seed}</span>}
             </div>
+            {generation.qc_notes && generation.quality_score !== null && generation.quality_score < 0.8 && (
+              <p className="text-[11px] text-amber-700">{generation.qc_notes}</p>
+            )}
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => onApprove(generation.id)}

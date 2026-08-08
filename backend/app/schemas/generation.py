@@ -25,6 +25,7 @@ class GenerationRead(BaseModel):
     output_path: str | None = None
     preview_path: str | None = None
     quality_score: float | None = None
+    qc_notes: str | None = None
     approval_status: ApprovalStatus
     is_active: bool
     created_at: datetime

@@ -12,6 +12,7 @@ import {
   updateShot,
 } from "@/lib/api";
 import { TextField, TextAreaField, SelectField } from "@/components/Field";
+import ShotPreview from "@/components/ShotPreview";
 import StoryboardPanel from "@/components/StoryboardPanel";
 import VideoPanel from "@/components/VideoPanel";
 import VoicePanel from "@/components/VoicePanel";
@@ -145,6 +146,8 @@ export default function ShotDetailPage() {
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {savedAt && <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">Saved.</p>}
+
+      <ShotPreview shot={shot} />
 
       <form onSubmit={handleSave} className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

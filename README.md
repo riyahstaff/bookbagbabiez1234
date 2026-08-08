@@ -4,24 +4,22 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 6 (Video System) complete
+## Status: Phase 7 (QC and Approvals) complete
 
-Phases 0-5 (research/architecture, app shell, Character Bible, story pipeline,
-storyboard system, voice system) are done. Phase 6 adds video: a `VideoProvider`
-abstraction (a deterministic Mock provider that animates the shot's own approved
-reference image with a simple zoom and a prompt/seed text overlay, saved as a real
-animated GIF since this dev environment has no ffmpeg/muxer available - the default so
-the app works with zero GPU; and a ComfyUI provider for Wan2.2-TI2V-5B, the
-Apache-2.0 image-to-video model `docs/RESEARCH.md` recommends, with Wan2.2-Animate
-deliberately deferred past the pilot per the phased plan). Video generation reuses the
-same `Generation`/versioning/approval infrastructure again - a shot can now have an
-active image, dialogue take, narration take, and video all at once - and enforces the
-"storyboard before video" rule directly in the API: generating video is blocked with a
-409 unless the shot's active storyboard image is approved, with an explicit
-override for a human who wants to skip ahead anyway. Frontend renders GIF output via
-`<img>` and real mp4/webm via `<video>`, dispatched on the file extension. There is
-still no lip-sync, QC automation, or episode assembly - that starts in Phase 7 (QC and
-approvals) and Phase 8 (episode assembler).
+Phases 0-6 (research/architecture, app shell, Character Bible, story pipeline,
+storyboard system, voice system, video system) are done. Approve/reject/activate and
+per-shot versioning already existed from Phase 4 onward, so Phase 7's real delta is
+automated QC and a unified preview: a `qc/` package (the location docs/ARCHITECTURE.md
+reserved for it from Phase 0) runs cheap, dependency-free heuristics right after every
+generation completes - flagging near-blank/blown-out images, near-silent audio, and
+(for Mock's GIF output) blank video frames - and writes an advisory `quality_score`/
+`qc_notes` onto the `Generation` row. It never blocks approve/reject/activate; it just
+surfaces likely-bad output so a reviewer doesn't have to open every version to spot
+one. A new Shot Preview section shows a shot's active image/video, dialogue, and
+narration together with a QC summary - a real "how does this shot look and sound right
+now" view that didn't exist before (still not the synced final export - that's Phase
+8's job), and the Scene view flags any shot with a low-scoring active generation. There
+is still no lip-sync or episode assembly - that starts in Phase 8 (episode assembler).
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration

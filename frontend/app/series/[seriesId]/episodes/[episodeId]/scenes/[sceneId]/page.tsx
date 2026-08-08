@@ -18,6 +18,15 @@ import {
 import { TextField, TextAreaField, SelectField } from "@/components/Field";
 import type { Character, Location, Scene, SceneInput, Shot } from "@/lib/types";
 
+function needsReview(shot: Shot): boolean {
+  return [
+    shot.active_image_generation,
+    shot.active_dialogue_generation,
+    shot.active_narration_generation,
+    shot.active_video_generation,
+  ].some((generation) => generation !== null && generation.quality_score !== null && generation.quality_score < 0.8);
+}
+
 export default function SceneDetailPage() {
   const params = useParams<{ seriesId: string; episodeId: string; sceneId: string }>();
   const seriesId = Number(params.seriesId);
@@ -348,6 +357,11 @@ export default function SceneDetailPage() {
                       {shot.active_video_generation && (
                         <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
                           Video
+                        </span>
+                      )}
+                      {needsReview(shot) && (
+                        <span className="inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                          Needs review
                         </span>
                       )}
                     </div>
