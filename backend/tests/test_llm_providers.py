@@ -1,5 +1,8 @@
 import json
 
+import pytest
+
+from app.providers.llm.base import LLMProvider
 from app.providers.llm.mock import MockLLMProvider
 
 
@@ -57,3 +60,93 @@ def test_provider_factory_defaults_to_mock():
     settings = get_settings()
     provider = _build_provider(settings.llm_creative_provider, settings.llm_creative_model)
     assert isinstance(provider, MockLLMProvider)
+
+
+class _FakeLLM(LLMProvider):
+    def __init__(self, response=None, error=None):
+        self.response = response
+        self.error = error
+        self.calls = 0
+
+    def generate(self, system_prompt, user_prompt):
+        self.calls += 1
+        if self.error:
+            raise self.error
+        return self.response
+
+
+def test_auto_provider_uses_the_cheaper_candidate():
+    from app.providers.llm.auto import AutoLLMProvider
+
+    cheap = _FakeLLM(response="from cheap")
+    expensive = _FakeLLM(response="from expensive")
+    provider = AutoLLMProvider([(expensive, 1.0), (cheap, 0.01)])
+
+    assert provider.generate("system", "user") == "from cheap"
+    assert cheap.calls == 1
+    assert expensive.calls == 0
+
+
+def test_auto_provider_falls_back_when_cheaper_one_fails():
+    from app.providers.llm.auto import AutoLLMProvider
+
+    cheap = _FakeLLM(error=RuntimeError("cheap provider is down"))
+    expensive = _FakeLLM(response="from expensive")
+    provider = AutoLLMProvider([(expensive, 1.0), (cheap, 0.01)])
+
+    assert provider.generate("system", "user") == "from expensive"
+    assert cheap.calls == 1
+    assert expensive.calls == 1
+
+
+def test_auto_provider_raises_when_every_candidate_fails():
+    from app.providers.llm.auto import AutoLLMProvider
+
+    first = _FakeLLM(error=RuntimeError("first is down"))
+    second = _FakeLLM(error=RuntimeError("second is down too"))
+    provider = AutoLLMProvider([(first, 0.01), (second, 1.0)])
+
+    with pytest.raises(RuntimeError, match="second is down too"):
+        provider.generate("system", "user")
+
+
+def test_auto_provider_with_no_candidates_raises_at_construction():
+    from app.providers.llm.auto import AutoLLMProvider
+
+    with pytest.raises(RuntimeError):
+        AutoLLMProvider([])
+
+
+def test_build_auto_provider_only_includes_credentialed_providers(monkeypatch):
+    from app.providers.llm import _build_auto_provider
+    from app.providers.llm.anthropic_provider import AnthropicProvider
+    from app.providers.llm.openai_compatible import OpenAICompatibleProvider
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-key-for-construction-only")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    provider = _build_auto_provider()
+
+    assert len(provider.candidates) == 1
+    assert isinstance(provider.candidates[0][0], AnthropicProvider)
+
+
+def test_build_auto_provider_includes_both_when_both_credentialed(monkeypatch):
+    from app.providers.llm import _build_auto_provider
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy-key-for-construction-only")
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-key-for-construction-only")
+
+    provider = _build_auto_provider()
+
+    assert len(provider.candidates) == 2
+
+
+def test_build_auto_provider_with_no_credentials_raises(monkeypatch):
+    from app.providers.llm import _build_auto_provider
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    with pytest.raises(RuntimeError):
+        _build_auto_provider()
