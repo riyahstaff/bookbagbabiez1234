@@ -431,3 +431,29 @@ export type ShotInput = Partial<
     | "updated_at"
   >
 >;
+
+export interface EpisodeExport {
+  id: number;
+  episode_id: number;
+  status: GenerationStatus;
+  output_path: string | null;
+  error_message: string | null;
+  duration_seconds: number | null;
+  include_titles: boolean;
+  include_credits: boolean;
+  include_subtitles: boolean;
+  skipped_shots: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EpisodeExportPreview {
+  renderable_shot_count: number;
+  skipped_shots: string[];
+}
+
+export interface EpisodeExportOptions {
+  include_titles: boolean;
+  include_credits: boolean;
+  include_subtitles: boolean;
+}

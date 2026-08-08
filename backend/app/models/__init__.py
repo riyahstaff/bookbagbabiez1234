@@ -14,6 +14,7 @@ from app.models.enums import (
     ShotType,
 )
 from app.models.episode import Episode
+from app.models.episode_export import EpisodeExport
 from app.models.generation import Generation
 from app.models.location import Location, LocationReference
 from app.models.prop import Prop, PropReference
@@ -31,6 +32,7 @@ __all__ = [
     "CharacterReference",
     "CharacterReferenceCategory",
     "Episode",
+    "EpisodeExport",
     "EpisodeStatus",
     "Generation",
     "GenerationStatus",

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 
 class StorageBackend(ABC):
@@ -11,6 +12,13 @@ class StorageBackend(ABC):
     @abstractmethod
     def save(self, relative_path: str, content: bytes) -> str:
         """Persist content at relative_path, returning the path it was stored under."""
+
+    @abstractmethod
+    def save_file(self, relative_path: str, source_path: Path) -> str:
+        """Persist the file at source_path under relative_path, returning the
+        path it was stored under. Prefer this over save() for large files
+        (e.g. assembled episode exports) - avoids holding the whole thing in
+        memory as bytes the way save() does."""
 
     @abstractmethod
     def delete(self, relative_path: str) -> None:

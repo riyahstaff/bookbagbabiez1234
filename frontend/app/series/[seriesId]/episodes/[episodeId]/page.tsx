@@ -14,6 +14,7 @@ import {
   updateEpisode,
 } from "@/lib/api";
 import { TextField, TextAreaField, SelectField } from "@/components/Field";
+import EpisodeExportPanel from "@/components/EpisodeExportPanel";
 import {
   EPISODE_STATUSES,
   type Episode,
@@ -42,12 +43,16 @@ export default function EpisodeDetailPage() {
     listScenes(episodeId).then(setScenes);
   }
 
+  function refreshEpisode() {
+    return getEpisode(episodeId).then((data) => {
+      setEpisode(data);
+      setForm(data);
+      return data;
+    });
+  }
+
   useEffect(() => {
-    getEpisode(episodeId)
-      .then((data) => {
-        setEpisode(data);
-        setForm(data);
-      })
+    refreshEpisode()
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load episode"))
       .finally(() => setLoading(false));
     refreshScenes();
@@ -327,6 +332,8 @@ export default function EpisodeDetailPage() {
           </ul>
         )}
       </section>
+
+      <EpisodeExportPanel episodeId={episodeId} onEpisodeChanged={refreshEpisode} />
     </div>
   );
 }

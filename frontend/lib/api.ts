@@ -6,6 +6,9 @@ import type {
   CharacterReference,
   CharacterReferenceCategory,
   Episode,
+  EpisodeExport,
+  EpisodeExportOptions,
+  EpisodeExportPreview,
   EpisodeInput,
   EpisodeStatus,
   Generation,
@@ -324,3 +327,16 @@ export const activateGeneration = (generationId: number) =>
   request<Generation>(`/api/generations/${generationId}/activate`, { method: "POST" });
 export const deleteGeneration = (generationId: number) =>
   request<void>(`/api/generations/${generationId}`, { method: "DELETE" });
+
+// Episode export (assembler)
+export const previewEpisodeExport = (episodeId: number) =>
+  request<EpisodeExportPreview>(`/api/episodes/${episodeId}/export-preview`);
+export const listEpisodeExports = (episodeId: number) =>
+  request<EpisodeExport[]>(`/api/episodes/${episodeId}/exports`);
+export const createEpisodeExport = (episodeId: number, options: EpisodeExportOptions) =>
+  request<EpisodeExport>(`/api/episodes/${episodeId}/export`, {
+    method: "POST",
+    body: JSON.stringify(options),
+  });
+export const deleteEpisodeExport = (exportId: number) =>
+  request<void>(`/api/exports/${exportId}`, { method: "DELETE" });

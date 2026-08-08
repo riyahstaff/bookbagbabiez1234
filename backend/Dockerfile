@@ -2,6 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# ffmpeg is a system binary, not a pip package - required for episode export
+# (app/assembler/). --no-install-recommends skips hardware video-acceleration
+# drivers that are irrelevant for the software encoding this app does.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 RUN pip install --no-cache-dir -e .
 

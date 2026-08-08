@@ -35,3 +35,7 @@ def generation_output_path(
     return _asset_path(
         series_code, "episodes", episode_code, "shots", str(shot_id), "generations", filename=filename
     )
+
+
+def episode_export_path(series_code: str, episode_code: str, filename: str) -> str:
+    return _asset_path(series_code, "episodes", episode_code, "episode_output", filename=filename)

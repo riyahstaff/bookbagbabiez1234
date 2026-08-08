@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from app.storage.base import StorageBackend
@@ -12,6 +13,12 @@ class LocalStorageBackend(StorageBackend):
         full_path = self.root / relative_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_bytes(content)
+        return relative_path
+
+    def save_file(self, relative_path: str, source_path: Path) -> str:
+        full_path = self.root / relative_path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(source_path, full_path)
         return relative_path
 
     def delete(self, relative_path: str) -> None:

@@ -4,22 +4,26 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 7 (QC and Approvals) complete
+## Status: Phase 8 (Episode Assembler) complete
 
-Phases 0-6 (research/architecture, app shell, Character Bible, story pipeline,
-storyboard system, voice system, video system) are done. Approve/reject/activate and
-per-shot versioning already existed from Phase 4 onward, so Phase 7's real delta is
-automated QC and a unified preview: a `qc/` package (the location docs/ARCHITECTURE.md
-reserved for it from Phase 0) runs cheap, dependency-free heuristics right after every
-generation completes - flagging near-blank/blown-out images, near-silent audio, and
-(for Mock's GIF output) blank video frames - and writes an advisory `quality_score`/
-`qc_notes` onto the `Generation` row. It never blocks approve/reject/activate; it just
-surfaces likely-bad output so a reviewer doesn't have to open every version to spot
-one. A new Shot Preview section shows a shot's active image/video, dialogue, and
-narration together with a QC summary - a real "how does this shot look and sound right
-now" view that didn't exist before (still not the synced final export - that's Phase
-8's job), and the Scene view flags any shot with a low-scoring active generation. There
-is still no lip-sync or episode assembly - that starts in Phase 8 (episode assembler).
+Phases 0-7 (research/architecture, app shell, Character Bible, story pipeline,
+storyboard system, voice system, video system, automated QC) are done. Phase 8 is the
+first time a shot's individually-approved assets actually become a watchable episode:
+a new `assembler/` package (ffmpeg-based, the location docs/ARCHITECTURE.md reserved
+for it from Phase 0) builds a timeline per episode - walking scenes/shots in order,
+preferring each shot's active video over its held image, mixing dialogue and narration
+audio underneath, skipping any shot with no renderable image or video and reporting
+exactly which ones - then renders optional title and credits cards (Pillow), an
+optional `.srt` from the same dialogue/narration text, concatenates everything with
+ffmpeg, and soft-muxes the subtitles in. A new `EpisodeExport` row records every export
+attempt (status, duration, which options were used, which shots were skipped, a link to
+the rendered MP4), and `Episode.status` now actually moves through `RENDERING` and `QC`
+around a real export instead of just existing as an unused enum value. The Episode page
+has a new Export section: title/credits/subtitles checkboxes, an upfront skipped-shots
+warning before you commit to exporting, a history of past exports with an inline
+`<video controls>` player, download link, and delete. There is still no lip-sync pass or
+job queue - generation and export are both still synchronous, deferred to pilot
+production (Phase 9) per `docs/RESEARCH.md`.
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration
