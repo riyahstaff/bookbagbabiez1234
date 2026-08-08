@@ -1,0 +1,30 @@
+# Environment / secrets
+.env
+.env.local
+*.pem
+
+# Runtime data — generated assets, never committed
+/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.log
