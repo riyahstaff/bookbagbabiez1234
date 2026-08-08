@@ -1,9 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import characters, episodes, series
+from app.api.routers import (
+    character_outfits,
+    character_references,
+    characters,
+    episodes,
+    locations,
+    props,
+    series,
+    voices,
+)
 from app.api.routers import settings as settings_router
-from app.config import get_settings
+from app.config import DATA_DIR, get_settings
 
 app_settings = get_settings()
 
@@ -27,3 +37,15 @@ app.include_router(series.router)
 app.include_router(characters.router)
 app.include_router(episodes.router)
 app.include_router(settings_router.router)
+app.include_router(character_references.router)
+app.include_router(character_outfits.router)
+app.include_router(voices.router)
+app.include_router(locations.router)
+app.include_router(props.router)
+
+# Uploaded reference images/audio live under data/series/... Mounted at /media
+# rather than serving all of data/ directly, so the sqlite file (a sibling of
+# series/, not inside it) is never reachable over HTTP.
+media_root = DATA_DIR / "series"
+media_root.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(media_root)), name="media")

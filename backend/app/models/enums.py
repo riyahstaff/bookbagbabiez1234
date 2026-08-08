@@ -19,3 +19,30 @@ class ProviderCapability(str, enum.Enum):
     UPSCALE = "UPSCALE"
     LIPSYNC = "LIPSYNC"
     COMPUTE = "COMPUTE"
+
+
+class CharacterReferenceCategory(str, enum.Enum):
+    FRONT = "FRONT"
+    SIDE = "SIDE"
+    THREE_QUARTER = "THREE_QUARTER"
+    FULL_BODY = "FULL_BODY"
+    CLOSE_UP = "CLOSE_UP"
+    HAPPY = "HAPPY"
+    ANGRY = "ANGRY"
+    SAD = "SAD"
+    TALKING = "TALKING"
+    SITTING = "SITTING"
+    WALKING = "WALKING"
+    RUNNING = "RUNNING"
+    ADDITIONAL = "ADDITIONAL"
+
+
+class LocationReferenceCategory(str, enum.Enum):
+    WIDE_ESTABLISHING = "WIDE_ESTABLISHING"
+    MEDIUM = "MEDIUM"
+    CLOSE_BACKGROUND = "CLOSE_BACKGROUND"
+    INTERIOR_NORTH = "INTERIOR_NORTH"
+    INTERIOR_SOUTH = "INTERIOR_SOUTH"
+    INTERIOR_EAST = "INTERIOR_EAST"
+    INTERIOR_WEST = "INTERIOR_WEST"
+    ADDITIONAL = "ADDITIONAL"

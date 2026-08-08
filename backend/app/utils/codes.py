@@ -17,3 +17,16 @@ def generate_unique_code(db: Session, model: type, column, base: str, width: int
         if not db.query(model).filter(column == candidate).first():
             return candidate
         sequence += 1
+
+
+def generate_unique_slug_code(db: Session, model: type, column, base: str) -> str:
+    """Prefer the bare descriptive code (e.g. OUTFIT_MARCUS_CASUAL, PROP_MAGIC_BOOK);
+    only fall back to a numbered suffix on an actual collision."""
+    if not db.query(model).filter(column == base).first():
+        return base
+    suffix = 2
+    while True:
+        candidate = f"{base}_{suffix}"
+        if not db.query(model).filter(column == candidate).first():
+            return candidate
+        suffix += 1

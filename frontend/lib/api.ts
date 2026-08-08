@@ -1,17 +1,32 @@
 import type {
   Character,
   CharacterInput,
+  CharacterOutfit,
+  CharacterReference,
+  CharacterReferenceCategory,
   Episode,
   EpisodeInput,
   EpisodeStatus,
+  Location,
+  LocationInput,
+  LocationReference,
+  LocationReferenceCategory,
+  OutfitReference,
   ProjectSetting,
+  Prop,
+  PropInput,
+  PropReference,
   ProviderCapability,
   ProviderConfiguration,
   Series,
   SeriesInput,
+  Voice,
+  VoiceInput,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export const mediaUrl = (relativePath: string) => `${API_BASE_URL}/media/${relativePath}`;
 
 export class ApiError extends Error {
   status: number;
@@ -21,12 +36,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-
+async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const raw = await response.text();
     let message = raw;
@@ -43,6 +53,19 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     return undefined as T;
   }
   return (await response.json()) as T;
+}
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  return handleResponse<T>(response);
+}
+
+async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { method: "POST", body: formData });
+  return handleResponse<T>(response);
 }
 
 // Series
@@ -109,3 +132,104 @@ export const updateProviderConfiguration = (
   });
 export const deleteProviderConfiguration = (id: number) =>
   request<void>(`/api/settings/providers/${id}`, { method: "DELETE" });
+
+// Character references
+export const listCharacterReferences = (characterId: number) =>
+  request<CharacterReference[]>(`/api/characters/${characterId}/references`);
+export const uploadCharacterReference = (
+  characterId: number,
+  file: File,
+  category: CharacterReferenceCategory,
+  notes?: string,
+) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("category", category);
+  if (notes) formData.append("notes", notes);
+  return uploadRequest<CharacterReference>(`/api/characters/${characterId}/references`, formData);
+};
+export const deleteCharacterReference = (referenceId: number) =>
+  request<void>(`/api/character-references/${referenceId}`, { method: "DELETE" });
+
+// Character outfits
+export const listOutfits = (characterId: number) =>
+  request<CharacterOutfit[]>(`/api/characters/${characterId}/outfits`);
+export const createOutfit = (characterId: number, name: string, description?: string) =>
+  request<CharacterOutfit>(`/api/characters/${characterId}/outfits`, {
+    method: "POST",
+    body: JSON.stringify({ name, description: description || null }),
+  });
+export const deleteOutfit = (outfitId: number) =>
+  request<void>(`/api/character-outfits/${outfitId}`, { method: "DELETE" });
+
+export const listOutfitReferences = (outfitId: number) =>
+  request<OutfitReference[]>(`/api/character-outfits/${outfitId}/references`);
+export const uploadOutfitReference = (outfitId: number, file: File, label?: string, notes?: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (label) formData.append("label", label);
+  if (notes) formData.append("notes", notes);
+  return uploadRequest<OutfitReference>(`/api/character-outfits/${outfitId}/references`, formData);
+};
+export const deleteOutfitReference = (referenceId: number) =>
+  request<void>(`/api/outfit-references/${referenceId}`, { method: "DELETE" });
+
+// Voices
+export const listVoices = (seriesId: number) => request<Voice[]>(`/api/series/${seriesId}/voices`);
+export const createVoice = (seriesId: number, input: VoiceInput & { name: string }) =>
+  request<Voice>(`/api/series/${seriesId}/voices`, { method: "POST", body: JSON.stringify(input) });
+export const updateVoice = (id: number, input: VoiceInput) =>
+  request<Voice>(`/api/voices/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteVoice = (id: number) => request<void>(`/api/voices/${id}`, { method: "DELETE" });
+export const uploadVoiceReferenceAudio = (voiceId: number, file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return uploadRequest<Voice>(`/api/voices/${voiceId}/reference-audio`, formData);
+};
+
+// Locations
+export const listLocations = (seriesId: number) => request<Location[]>(`/api/series/${seriesId}/locations`);
+export const getLocation = (id: number) => request<Location>(`/api/locations/${id}`);
+export const createLocation = (seriesId: number, input: LocationInput & { name: string }) =>
+  request<Location>(`/api/series/${seriesId}/locations`, { method: "POST", body: JSON.stringify(input) });
+export const updateLocation = (id: number, input: LocationInput) =>
+  request<Location>(`/api/locations/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteLocation = (id: number) => request<void>(`/api/locations/${id}`, { method: "DELETE" });
+
+export const listLocationReferences = (locationId: number) =>
+  request<LocationReference[]>(`/api/locations/${locationId}/references`);
+export const uploadLocationReference = (
+  locationId: number,
+  file: File,
+  category: LocationReferenceCategory,
+  notes?: string,
+) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("category", category);
+  if (notes) formData.append("notes", notes);
+  return uploadRequest<LocationReference>(`/api/locations/${locationId}/references`, formData);
+};
+export const deleteLocationReference = (referenceId: number) =>
+  request<void>(`/api/location-references/${referenceId}`, { method: "DELETE" });
+
+// Props
+export const listProps = (seriesId: number) => request<Prop[]>(`/api/series/${seriesId}/props`);
+export const getProp = (id: number) => request<Prop>(`/api/props/${id}`);
+export const createProp = (seriesId: number, input: PropInput & { name: string }) =>
+  request<Prop>(`/api/series/${seriesId}/props`, { method: "POST", body: JSON.stringify(input) });
+export const updateProp = (id: number, input: PropInput) =>
+  request<Prop>(`/api/props/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export const deleteProp = (id: number) => request<void>(`/api/props/${id}`, { method: "DELETE" });
+
+export const listPropReferences = (propId: number) =>
+  request<PropReference[]>(`/api/props/${propId}/references`);
+export const uploadPropReference = (propId: number, file: File, label?: string, notes?: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (label) formData.append("label", label);
+  if (notes) formData.append("notes", notes);
+  return uploadRequest<PropReference>(`/api/props/${propId}/references`, formData);
+};
+export const deletePropReference = (referenceId: number) =>
+  request<void>(`/api/prop-references/${referenceId}`, { method: "DELETE" });

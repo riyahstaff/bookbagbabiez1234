@@ -28,3 +28,8 @@ class Series(TimestampedBase):
     episodes: Mapped[list["Episode"]] = relationship(
         back_populates="series", cascade="all, delete-orphan"
     )
+    voices: Mapped[list["Voice"]] = relationship(back_populates="series", cascade="all, delete-orphan")
+    locations: Mapped[list["Location"]] = relationship(
+        back_populates="series", cascade="all, delete-orphan"
+    )
+    props: Mapped[list["Prop"]] = relationship(back_populates="series", cascade="all, delete-orphan")

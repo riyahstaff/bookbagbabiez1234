@@ -84,6 +84,15 @@ export default function SeriesDetailPage() {
         <Link href={`/series/${seriesId}/episodes`} className="font-medium text-slate-700 hover:underline">
           Episodes →
         </Link>
+        <Link href={`/series/${seriesId}/voices`} className="font-medium text-slate-700 hover:underline">
+          Voices →
+        </Link>
+        <Link href={`/series/${seriesId}/locations`} className="font-medium text-slate-700 hover:underline">
+          Locations →
+        </Link>
+        <Link href={`/series/${seriesId}/props`} className="font-medium text-slate-700 hover:underline">
+          Props →
+        </Link>
       </nav>
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

@@ -3,9 +3,28 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { deleteCharacter, getCharacter, updateCharacter } from "@/lib/api";
+import {
+  createOutfit,
+  deleteCharacter,
+  deleteCharacterReference,
+  deleteOutfit,
+  getCharacter,
+  listCharacterReferences,
+  listOutfits,
+  mediaUrl,
+  updateCharacter,
+  uploadCharacterReference,
+} from "@/lib/api";
 import { TextField, TextAreaField } from "@/components/Field";
-import type { Character, CharacterInput } from "@/lib/types";
+import ReferenceGallery from "@/components/ReferenceGallery";
+import OutfitCard from "@/components/OutfitCard";
+import {
+  CHARACTER_REFERENCE_CATEGORIES,
+  type Character,
+  type CharacterInput,
+  type CharacterOutfit,
+  type CharacterReference,
+} from "@/lib/types";
 
 export default function CharacterDetailPage() {
   const params = useParams<{ seriesId: string; characterId: string }>();
@@ -20,6 +39,10 @@ export default function CharacterDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
+  const [references, setReferences] = useState<CharacterReference[]>([]);
+  const [outfits, setOutfits] = useState<CharacterOutfit[]>([]);
+  const [newOutfitName, setNewOutfitName] = useState("");
+
   useEffect(() => {
     getCharacter(characterId)
       .then((data) => {
@@ -28,6 +51,8 @@ export default function CharacterDetailPage() {
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load character"))
       .finally(() => setLoading(false));
+    listCharacterReferences(characterId).then(setReferences);
+    listOutfits(characterId).then(setOutfits);
   }, [characterId]);
 
   function set<K extends keyof CharacterInput>(key: K, value: CharacterInput[K]) {
@@ -60,6 +85,19 @@ export default function CharacterDetailPage() {
     }
   }
 
+  async function handleCreateOutfit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!newOutfitName.trim()) return;
+    const outfit = await createOutfit(characterId, newOutfitName);
+    setOutfits((prev) => [...prev, outfit]);
+    setNewOutfitName("");
+  }
+
+  async function handleDeleteOutfit(outfitId: number) {
+    await deleteOutfit(outfitId);
+    setOutfits((prev) => prev.filter((o) => o.id !== outfitId));
+  }
+
   if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
   if (!character) return <p className="text-sm text-red-700">{error ?? "Character not found."}</p>;
 
@@ -80,11 +118,6 @@ export default function CharacterDetailPage() {
           Delete Character
         </button>
       </div>
-
-      <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Reference images (front/side/3-4/expressions), outfits, and voice assignment come in Phase 2.
-        This form covers the character&apos;s core identity for now.
-      </p>
 
       {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {savedAt && <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">Saved.</p>}
@@ -164,6 +197,66 @@ export default function CharacterDetailPage() {
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-medium">Reference Images</h2>
+          <p className="text-sm text-slate-500">
+            These get pulled into every generation request involving this character. Never let hair,
+            skin tone, clothing, or body proportions drift from these unless the script requires it.
+          </p>
+        </div>
+        <ReferenceGallery
+          tagLabel="Category"
+          categories={CHARACTER_REFERENCE_CATEGORIES}
+          items={references.map((r) => ({ id: r.id, imageUrl: mediaUrl(r.image_path), tag: r.category }))}
+          onUpload={async (file, category) => {
+            await uploadCharacterReference(
+              characterId,
+              file,
+              category as (typeof CHARACTER_REFERENCE_CATEGORIES)[number],
+            );
+            setReferences(await listCharacterReferences(characterId));
+          }}
+          onDelete={async (id) => {
+            await deleteCharacterReference(id);
+            setReferences(await listCharacterReferences(characterId));
+          }}
+        />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-medium">Outfits</h2>
+          <p className="text-sm text-slate-500">
+            Identity stays separate from wardrobe - each scene references a specific outfit instead of
+            re-describing clothing every time, which is what prevents wardrobe drift.
+          </p>
+        </div>
+        <form onSubmit={handleCreateOutfit} className="flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-3">
+          <TextField
+            label="New Outfit Name"
+            value={newOutfitName}
+            onChange={(e) => setNewOutfitName(e.target.value)}
+            placeholder="Casual"
+          />
+          <button
+            type="submit"
+            className="rounded bg-slate-900 px-4 py-1.5 text-sm font-medium text-white"
+          >
+            Add Outfit
+          </button>
+        </form>
+        {outfits.length === 0 ? (
+          <p className="text-sm text-slate-500">No outfits yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {outfits.map((outfit) => (
+              <OutfitCard key={outfit.id} outfit={outfit} onDelete={handleDeleteOutfit} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

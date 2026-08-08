@@ -27,3 +27,12 @@ class Character(TimestampedBase):
     continuity_restrictions: Mapped[str | None] = mapped_column(Text, default=None)
 
     series: Mapped["Series"] = relationship(back_populates="characters")
+    references: Mapped[list["CharacterReference"]] = relationship(
+        back_populates="character", cascade="all, delete-orphan"
+    )
+    outfits: Mapped[list["CharacterOutfit"]] = relationship(
+        back_populates="character", cascade="all, delete-orphan"
+    )
+    voices: Mapped[list["Voice"]] = relationship(
+        back_populates="character", cascade="all, delete-orphan"
+    )

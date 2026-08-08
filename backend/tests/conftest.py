@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 from app import models  # noqa: F401 - ensures all models are registered on Base.metadata
 from app.database import Base, get_db
 from app.main import app
+from app.storage import get_storage
+from app.storage.local import LocalStorageBackend
 
 
 @pytest.fixture()
@@ -29,11 +31,20 @@ def db_session() -> Generator:
 
 
 @pytest.fixture()
-def client(db_session) -> Generator:
+def test_storage(tmp_path) -> LocalStorageBackend:
+    return LocalStorageBackend(tmp_path / "series")
+
+
+@pytest.fixture()
+def client(db_session, test_storage) -> Generator:
     def _override_get_db() -> Generator:
         yield db_session
 
+    def _override_get_storage() -> LocalStorageBackend:
+        return test_storage
+
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_storage] = _override_get_storage
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

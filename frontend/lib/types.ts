@@ -125,3 +125,156 @@ export interface ProjectSetting {
   value: string | null;
   updated_at: string;
 }
+
+export type CharacterReferenceCategory =
+  | "FRONT"
+  | "SIDE"
+  | "THREE_QUARTER"
+  | "FULL_BODY"
+  | "CLOSE_UP"
+  | "HAPPY"
+  | "ANGRY"
+  | "SAD"
+  | "TALKING"
+  | "SITTING"
+  | "WALKING"
+  | "RUNNING"
+  | "ADDITIONAL";
+
+export const CHARACTER_REFERENCE_CATEGORIES: CharacterReferenceCategory[] = [
+  "FRONT",
+  "SIDE",
+  "THREE_QUARTER",
+  "FULL_BODY",
+  "CLOSE_UP",
+  "HAPPY",
+  "ANGRY",
+  "SAD",
+  "TALKING",
+  "SITTING",
+  "WALKING",
+  "RUNNING",
+  "ADDITIONAL",
+];
+
+export interface CharacterReference {
+  id: number;
+  character_id: number;
+  category: CharacterReferenceCategory;
+  image_path: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface CharacterOutfit {
+  id: number;
+  character_id: number;
+  outfit_code: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OutfitReference {
+  id: number;
+  outfit_id: number;
+  label: string | null;
+  image_path: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Voice {
+  id: number;
+  series_id: number;
+  character_id: number | null;
+  voice_code: string;
+  name: string;
+  provider: string | null;
+  provider_voice_id: string | null;
+  reference_audio_path: string | null;
+  description: string | null;
+  speaking_style: string | null;
+  speed: number | null;
+  pitch: number | null;
+  emotion: string | null;
+  generation_settings: Record<string, unknown> | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type VoiceInput = Partial<
+  Omit<Voice, "id" | "series_id" | "voice_code" | "reference_audio_path" | "created_at" | "updated_at">
+>;
+
+export type LocationReferenceCategory =
+  | "WIDE_ESTABLISHING"
+  | "MEDIUM"
+  | "CLOSE_BACKGROUND"
+  | "INTERIOR_NORTH"
+  | "INTERIOR_SOUTH"
+  | "INTERIOR_EAST"
+  | "INTERIOR_WEST"
+  | "ADDITIONAL";
+
+export const LOCATION_REFERENCE_CATEGORIES: LocationReferenceCategory[] = [
+  "WIDE_ESTABLISHING",
+  "MEDIUM",
+  "CLOSE_BACKGROUND",
+  "INTERIOR_NORTH",
+  "INTERIOR_SOUTH",
+  "INTERIOR_EAST",
+  "INTERIOR_WEST",
+  "ADDITIONAL",
+];
+
+export interface Location {
+  id: number;
+  series_id: number;
+  location_code: string;
+  name: string;
+  description: string | null;
+  lighting_notes: string | null;
+  time_of_day_notes: string | null;
+  camera_reference_notes: string | null;
+  important_props: string | null;
+  continuity_rules: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type LocationInput = Partial<
+  Omit<Location, "id" | "series_id" | "location_code" | "created_at" | "updated_at">
+>;
+
+export interface LocationReference {
+  id: number;
+  location_id: number;
+  category: LocationReferenceCategory;
+  image_path: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Prop {
+  id: number;
+  series_id: number;
+  prop_code: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PropInput = Partial<Omit<Prop, "id" | "series_id" | "prop_code" | "created_at" | "updated_at">>;
+
+export interface PropReference {
+  id: number;
+  prop_id: number;
+  label: string | null;
+  image_path: string;
+  notes: string | null;
+  created_at: string;
+}
