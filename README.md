@@ -4,22 +4,24 @@ An open-source, budget-conscious production pipeline for generating character-co
 animated episodes — from treatment to finished MP4 — without betting the whole app on
 any single AI model vendor.
 
-## Status: Phase 5 (Voice System) complete
+## Status: Phase 6 (Video System) complete
 
-Phases 0-4 (research/architecture, app shell, Character Bible, story pipeline,
-storyboard system) are done. Phase 5 adds narration and dialogue audio: a
-`VoiceProvider` abstraction (a deterministic Mock provider that writes a real WAV tone
-- duration scaled to the line's length, pitch derived from the voice - the default so
-the app works with zero GPU/API keys; and an OpenAI-compatible `/audio/speech`
-provider for self-hosted Chatterbox/CosyVoice2/Qwen3-TTS servers, or real OpenAI TTS).
-Storyboard images, dialogue audio, and narration audio now share the same
-`Generation`/versioning/approval infrastructure from Phase 4, generalized so a shot
-can have all three kinds of generation active at once instead of one shared "active"
-slot. Dialogue/narration audio is content-hash cached across the whole app (same
-text + voice + settings reuses the existing file instead of resynthesizing, with a
-reference-counted delete so a shared file only disappears once nothing still points at
-it) - the effect that matters most once a script repeats lines or a season reuses a
-catchphrase. There is still no video generation - that starts in Phase 6.
+Phases 0-5 (research/architecture, app shell, Character Bible, story pipeline,
+storyboard system, voice system) are done. Phase 6 adds video: a `VideoProvider`
+abstraction (a deterministic Mock provider that animates the shot's own approved
+reference image with a simple zoom and a prompt/seed text overlay, saved as a real
+animated GIF since this dev environment has no ffmpeg/muxer available - the default so
+the app works with zero GPU; and a ComfyUI provider for Wan2.2-TI2V-5B, the
+Apache-2.0 image-to-video model `docs/RESEARCH.md` recommends, with Wan2.2-Animate
+deliberately deferred past the pilot per the phased plan). Video generation reuses the
+same `Generation`/versioning/approval infrastructure again - a shot can now have an
+active image, dialogue take, narration take, and video all at once - and enforces the
+"storyboard before video" rule directly in the API: generating video is blocked with a
+409 unless the shot's active storyboard image is approved, with an explicit
+override for a human who wants to skip ahead anyway. Frontend renders GIF output via
+`<img>` and real mp4/webm via `<video>`, dispatched on the file extension. There is
+still no lip-sync, QC automation, or episode assembly - that starts in Phase 7 (QC and
+approvals) and Phase 8 (episode assembler).
 
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) — current model landscape, verified licenses and hardware requirements
 - [`docs/LICENSING.md`](docs/LICENSING.md) — license table for every model/tool under consideration

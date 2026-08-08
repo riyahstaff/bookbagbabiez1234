@@ -67,3 +67,4 @@ class ShotRead(ShotBase):
     active_image_generation: GenerationRead | None = None
     active_dialogue_generation: GenerationRead | None = None
     active_narration_generation: GenerationRead | None = None
+    active_video_generation: GenerationRead | None = None

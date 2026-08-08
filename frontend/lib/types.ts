@@ -411,6 +411,7 @@ export interface Shot {
   active_image_generation: Generation | null;
   active_dialogue_generation: Generation | null;
   active_narration_generation: Generation | null;
+  active_video_generation: Generation | null;
   created_at: string;
   updated_at: string;
 }
@@ -424,6 +425,7 @@ export type ShotInput = Partial<
     | "active_image_generation"
     | "active_dialogue_generation"
     | "active_narration_generation"
+    | "active_video_generation"
     | "created_at"
     | "updated_at"
   >

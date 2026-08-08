@@ -305,6 +305,17 @@ export const generateVoice = (
       force_regenerate: options?.forceRegenerate ?? false,
     }),
   });
+export const generateVideo = (
+  shotId: number,
+  options?: { seed?: number | null; overrideApprovalGate?: boolean },
+) =>
+  request<Generation>(`/api/shots/${shotId}/generate-video`, {
+    method: "POST",
+    body: JSON.stringify({
+      seed: options?.seed ?? null,
+      override_approval_gate: options?.overrideApprovalGate ?? false,
+    }),
+  });
 export const approveGeneration = (generationId: number) =>
   request<Generation>(`/api/generations/${generationId}/approve`, { method: "POST" });
 export const rejectGeneration = (generationId: number) =>

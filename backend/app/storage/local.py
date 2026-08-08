@@ -21,3 +21,6 @@ class LocalStorageBackend(StorageBackend):
 
     def exists(self, relative_path: str) -> bool:
         return (self.root / relative_path).exists()
+
+    def read(self, relative_path: str) -> bytes:
+        return (self.root / relative_path).read_bytes()

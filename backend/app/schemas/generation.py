@@ -40,3 +40,8 @@ class GenerateVoiceRequest(BaseModel):
     voice_id: int
     seed: int | None = None
     force_regenerate: bool = False
+
+
+class GenerateVideoRequest(BaseModel):
+    seed: int | None = None
+    override_approval_gate: bool = False

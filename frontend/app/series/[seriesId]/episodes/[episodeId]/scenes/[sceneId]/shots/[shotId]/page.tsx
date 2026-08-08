@@ -13,6 +13,7 @@ import {
 } from "@/lib/api";
 import { TextField, TextAreaField, SelectField } from "@/components/Field";
 import StoryboardPanel from "@/components/StoryboardPanel";
+import VideoPanel from "@/components/VideoPanel";
 import VoicePanel from "@/components/VoicePanel";
 import { SHOT_TYPES, type Character, type Shot, type ShotInput, type ShotType } from "@/lib/types";
 
@@ -277,6 +278,7 @@ export default function ShotDetailPage() {
       <StoryboardPanel shotId={shotId} onShotChanged={refreshShot} />
       <VoicePanel shotId={shotId} seriesId={seriesId} track="DIALOGUE" text={shot.dialogue} onShotChanged={refreshShot} />
       <VoicePanel shotId={shotId} seriesId={seriesId} track="NARRATION" text={shot.narration} onShotChanged={refreshShot} />
+      <VideoPanel shotId={shotId} activeImageGeneration={shot.active_image_generation} onShotChanged={refreshShot} />
     </div>
   );
 }

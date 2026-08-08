@@ -55,6 +55,13 @@ class Shot(TimestampedBase):
             None,
         )
 
+    @property
+    def active_video_generation(self) -> "Generation | None":
+        return next(
+            (g for g in self.generations if g.is_active and g.generation_type == GenerationType.VIDEO),
+            None,
+        )
+
 
 class ShotCharacter(TimestampedBase):
     __tablename__ = "shot_characters"

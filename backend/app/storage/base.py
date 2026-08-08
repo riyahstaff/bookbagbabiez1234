@@ -18,3 +18,7 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def exists(self, relative_path: str) -> bool: ...
+
+    @abstractmethod
+    def read(self, relative_path: str) -> bytes:
+        """Read back the bytes stored at relative_path. Raises if missing."""

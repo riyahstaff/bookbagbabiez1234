@@ -345,6 +345,11 @@ export default function SceneDetailPage() {
                           Narration audio
                         </span>
                       )}
+                      {shot.active_video_generation && (
+                        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                          Video
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

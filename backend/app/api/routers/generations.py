@@ -17,9 +17,16 @@ from app.models import (
 from app.pipeline.shot_prompt import build_shot_prompt
 from app.providers.image import get_image_provider
 from app.providers.image.base import ImageProvider
+from app.providers.video import get_video_provider
+from app.providers.video.base import VideoProvider
 from app.providers.voice import get_voice_provider
 from app.providers.voice.base import VoiceProvider
-from app.schemas.generation import GenerateStoryboardRequest, GenerateVoiceRequest, GenerationRead
+from app.schemas.generation import (
+    GenerateStoryboardRequest,
+    GenerateVideoRequest,
+    GenerateVoiceRequest,
+    GenerationRead,
+)
 from app.storage import get_storage
 from app.storage.base import StorageBackend
 from app.utils.paths import generation_output_path
@@ -200,6 +207,81 @@ def generate_voice(
         except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
             generation.status = GenerationStatus.FAILED
             generation.error_message = str(exc)
+
+    db.commit()
+    db.refresh(generation)
+    return generation
+
+
+@router.post("/api/shots/{shot_id}/generate-video", response_model=GenerationRead, status_code=201)
+def generate_video(
+    shot_id: int,
+    payload: GenerateVideoRequest,
+    db: Session = Depends(get_db),
+    provider: VideoProvider = Depends(get_video_provider),
+    storage: StorageBackend = Depends(get_storage),
+):
+    shot = _get_shot_or_404(db, shot_id)
+    reference_generation = shot.active_image_generation
+
+    if not reference_generation or not reference_generation.output_path:
+        raise HTTPException(
+            status_code=409,
+            detail="This shot has no active storyboard image yet - generate and activate one first.",
+        )
+    if not payload.override_approval_gate and reference_generation.approval_status != ApprovalStatus.APPROVED:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This shot's active storyboard image is not approved yet. Approve it first, "
+                "or retry with override_approval_gate=true."
+            ),
+        )
+
+    if not shot.visual_prompt:
+        characters_visible = [sc.character for sc in shot.characters]
+        series = shot.scene.episode.series
+        visual_prompt, negative_prompt = build_shot_prompt(shot, shot.scene, series, characters_visible)
+        shot.visual_prompt = visual_prompt
+        shot.negative_prompt = shot.negative_prompt or negative_prompt
+        db.flush()
+
+    reference_image_bytes = storage.read(reference_generation.output_path)
+
+    generation = Generation(
+        shot_id=shot_id,
+        generation_type=GenerationType.VIDEO,
+        provider_name=type(provider).__name__,
+        prompt=shot.visual_prompt,
+        negative_prompt=shot.negative_prompt,
+        seed=payload.seed,
+        status=GenerationStatus.RUNNING,
+    )
+    db.add(generation)
+    db.flush()
+
+    try:
+        result = provider.generate_video(
+            prompt=shot.visual_prompt or "",
+            reference_image_bytes=reference_image_bytes,
+            negative_prompt=shot.negative_prompt,
+            seed=payload.seed,
+            duration_seconds=shot.duration_seconds,
+        )
+        episode = shot.scene.episode
+        relative_path = generation_output_path(
+            episode.series.series_code,
+            episode.episode_code,
+            shot_id,
+            f"{generation.id}.{result.file_extension}",
+        )
+        storage.save(relative_path, result.video_bytes)
+        generation.output_path = relative_path
+        generation.model_name = result.model_name
+        generation.status = GenerationStatus.COMPLETE
+    except Exception as exc:  # noqa: BLE001 - deliberately broad: any provider failure lands here
+        generation.status = GenerationStatus.FAILED
+        generation.error_message = str(exc)
 
     db.commit()
     db.refresh(generation)

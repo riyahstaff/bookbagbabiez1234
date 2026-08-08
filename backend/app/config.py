@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     voice_provider: str = "mock"
     voice_model: str | None = None
 
+    # "mock" (default, zero cost/setup, animates the reference image into a
+    # real placeholder GIF) | "comfyui" (Wan2.2-TI2V-5B, reuses comfyui_base_url)
+    video_provider: str = "mock"
+
 
 @lru_cache
 def get_settings() -> Settings:
